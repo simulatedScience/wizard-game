@@ -13,11 +13,12 @@ def test_trick(trick, trump, correct_result):
     print(f"{str(correct_result == res):>5} | score is {res}, should be {correct_result}")
     return correct_result == res
 
+
 # define and print deck
-reds    = [Wizard_Card(i) for i in range( 0, 15)]
+reds = [Wizard_Card(i) for i in range(0, 15)]
 yellows = [Wizard_Card(i) for i in range(15, 30)]
-greens  = [Wizard_Card(i) for i in range(30, 45)]
-blues   = [Wizard_Card(i) for i in range(45, 60)]
+greens = [Wizard_Card(i) for i in range(30, 45)]
+blues = [Wizard_Card(i) for i in range(45, 60)]
 print(reds)
 print(yellows)
 print(greens)

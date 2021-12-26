@@ -3,6 +3,7 @@ from typing import Tuple
 
 from wizard_card import Wizard_Card
 
+
 def get_hands(n_players: int, round_nbr: int) -> Tuple[list, Wizard_Card]:
     """
     return a list of lists, where each sublist represents one player's cards.
@@ -22,12 +23,12 @@ def get_hands(n_players: int, round_nbr: int) -> Tuple[list, Wizard_Card]:
     """
     deck = [Wizard_Card(i) for i in range(60)]
     np.random.shuffle(deck)
-    hands = [[]]*n_players
+    hands = [[]] * n_players
     for i in range(n_players):
-        hands[i] = deck[i*round_nbr:i*round_nbr+round_nbr]
+        hands[i] = deck[i * round_nbr:i * round_nbr + round_nbr]
     # determine trump for the round
-    if n_players*round_nbr == 60:
+    if n_players * round_nbr == 60:
         trump_card = None
     else:
-        trump_card = deck[n_players*round_nbr]
+        trump_card = deck[n_players * round_nbr]
     return hands, trump_card

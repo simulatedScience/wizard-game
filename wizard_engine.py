@@ -21,7 +21,7 @@ class Wizard_Game():
         self.n_players = n_players
 
 
-    def play_game(self, limit_choices: bool=True) -> None:
+    def play_game(self, limit_choices: bool = True) -> None:
         # , extra_cards=False):
         """
         start a game with `n_players` players.
@@ -30,7 +30,7 @@ class Wizard_Game():
         -------
             n_players (int) in [3,4,5,6] - number of players
             limit_choices (bool) - if True, the number of predicted points can't equal the number of rounds.
-        
+
             # extra_cards (bool) - whether or not to add 6 special extra cards:
             #     - fairy: always looses, except when a dragon is played. Then it wins.
             #     - dragon: always wins, except when a fairy is played. Then it loses.
@@ -45,7 +45,7 @@ class Wizard_Game():
         """
         # initialize object to save the game state
         game = Wizard_Game_State(n_players=self.n_players, verbosity=2)
-        for round_nbr in range(1, 60//self.n_players+1):
+        for round_nbr in range(1, 60 // self.n_players + 1):
             self.play_round(round_nbr, game, limit_choices)
         self.print_game_results(game)
 
@@ -60,7 +60,7 @@ class Wizard_Game():
             trump_color = -1
         elif trump_card.value != 14:
             trump_color = trump_card.color
-        else: # trump card is a wizard -> player who "gave cards" determines trump
+        else:  # trump card is a wizard -> player who "gave cards" determines trump
             trump_color = player_inputs.trump_color_input(game.round_starting_player)
         print(f"Starting round {round_nbr}")
         game.start_round(hands, trump_card, trump_color)
@@ -73,8 +73,8 @@ class Wizard_Game():
 
 
     def play_trick(self,
-            game: Wizard_Game_State,
-            ) -> int:
+                   game: Wizard_Game_State,
+                   ) -> int:
         """
         play one trick
         """
@@ -96,7 +96,7 @@ class Wizard_Game():
         print("final results:")
         # print table headline
         table_headline = "|"
-        for i in range(1, self.n_players+1):
+        for i in range(1, self.n_players + 1):
             table_headline += f"  P{i}  |"
         print(table_headline)
 
@@ -121,6 +121,7 @@ class Wizard_Game():
         print(result_line)
         # determine and print winner
         print(f"winning player is:    P{np.argmax(total_scores)+1}")
+
 
 if __name__ == "__main__":
     game = Wizard_Game(n_players=3)

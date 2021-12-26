@@ -5,6 +5,7 @@ from typing import Tuple
 from wizard_card import Wizard_Card
 import numpy as np
 
+
 def update_winning_card(
         player_index: int,
         new_card: Wizard_Card,
@@ -77,18 +78,18 @@ def score_trick(played_cards: list, trump: int) -> int:
     for i, card in enumerate(played_cards[1:]):
         # check wizard
         if card.value == 14 and winning_card.value < 14:
-            return i+1
+            return i + 1
         # check jester
         if card.value == 0:
             continue
         # check trump card when current winner is not trump
         elif card.color == trump and winning_card.color != trump:
-            winner = i+1
+            winner = i + 1
             winning_card = card
             continue
         # check regular card and (trump card if current winner is trump)
         elif card.color == winning_card.color and card.value > winning_card.value:
-            winner = i+1
+            winner = i + 1
             winning_card = card
     return winner
 
@@ -110,5 +111,5 @@ def score_round(predictions, won_tricks):
     correctly_guessed = predictions == won_tricks
     scores = correctly_guessed * 20 \
         + 10 * correctly_guessed * won_tricks \
-        - 10 * np.abs(predictions-won_tricks)
+        - 10 * np.abs(predictions - won_tricks)
     return scores

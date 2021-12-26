@@ -1,5 +1,6 @@
 import colored
 
+
 def colored_text(text, color):
     """
     return text to be printed in the given color

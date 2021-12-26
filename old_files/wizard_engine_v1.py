@@ -6,7 +6,7 @@ from colored_text import colored_text as colored
 
 
 class WizardGame():
-    def __init__(self, n_players: int, limit_choices: bool=True):
+    def __init__(self, n_players: int, limit_choices: bool = True):
         """
         initialize a Wizard game.
 
@@ -17,7 +17,7 @@ class WizardGame():
         """
         self.n_players = n_players
 
-    def play_game(self, n_players: int, limit_choices: bool=True):
+    def play_game(self, n_players: int, limit_choices: bool = True):
         # , extra_cards=False):
         """
         start a game with `n_players` players.
@@ -44,7 +44,7 @@ class WizardGame():
         point_history = np.array([])
         # determine random starting player
         start_player = np.random.randint(n_players)
-        for round_nbr in range(1, 60//n_players):
+        for round_nbr in range(1, 60 // n_players):
             # play a round, calculate scores and save them for each player
             points = self.play_round(
                 round_nbr, start_player, current_points=total_points)
@@ -53,7 +53,7 @@ class WizardGame():
             # add points to total scores
             total_points += points
             # increment starting player by one
-            start_player = (start_player+1) % n_players
+            start_player = (start_player + 1) % n_players
 
         self.print_game_results()
 
@@ -72,17 +72,17 @@ class WizardGame():
         won_tricks = np.zeros(self.n_players, dtype=np.int16)
         for _ in range(round_nbr):
             trick_winner: int = self.play_trick(hands, start_player, won_tricks,
-                            round_nbr, trump, predictions, current_points)
+                                                round_nbr, trump, predictions, current_points)
             won_tricks[trick_winner] += 1
 
     def play_trick(self,
-            hands: List[Wizard_Card],
-            start_player: int,
-            won_tricks: np.typing.NDArray[np.int16],
-            round_nbr: int,
-            trump: int,
-            predictions: np.typing.NDArray[np.int16],
-            current_points: np.typing.NDArray[np.int16]) -> int:
+                   hands: List[Wizard_Card],
+                   start_player: int,
+                   won_tricks: np.typing.NDArray[np.int16],
+                   round_nbr: int,
+                   trump: int,
+                   predictions: np.typing.NDArray[np.int16],
+                   current_points: np.typing.NDArray[np.int16]) -> int:
         """
         play one trick
         """
@@ -94,10 +94,10 @@ class WizardGame():
                      "current_points": current_points}   # total number of points for each player
         # NOT DONE
         serving_color: int = -1
-        played_cards: List[int] = [-1]*self.n_players
+        played_cards: List[int] = [-1] * self.n_players
         player: int = start_player
         for i in range(self.n_players):
-            player = (player+1) % self.n_players
+            player = (player + 1) % self.n_players
         # for round_input, hand, player_wins, prediction in zip(self.round_inputs, hands, won_tricks, predictions):
             hand = hands[player]
             action = self.get_round_input(player, hand, serving_color, game_info)
@@ -114,7 +114,7 @@ class WizardGame():
             hand: list,
             serving_color: int,
             game_info: dict):
-        
+
 
 
     def print_game_results(self, gained_points_history, total_scores):
@@ -130,11 +130,11 @@ class WizardGame():
         print("final results:")
         # print table headline
         table_headline = "|"
-        for i in range(1, self.n_players+1):
+        for i in range(1, self.n_players + 1):
             table_headline += f"  P{i}  |"
         print(table_headline)
 
-        table_seperator = "|" + "------|"*self.n_players
+        table_seperator = "|" + "------|" * self.n_players
         print(table_seperator)
         # print table body containing intermediate results for each round
         # if a player lost points in a round, that score is marked red.

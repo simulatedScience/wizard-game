@@ -99,7 +99,7 @@ def get_predictions(game: Wizard_Game_State, round_nbr: int, limit_choices: bool
                 predictions[player_index] = int_input
                 # check that sum of predictions is not equal to round number
                 if limit_choices \
-                        and player_index == (game.round_starting_player-1) % game.n_players \
+                        and player_index == (game.round_starting_player - 1) % game.n_players \
                         and np.sum(predictions) == round_nbr:
                     print(f"You cannot choose {int_input} tricks.")
                     continue

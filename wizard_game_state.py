@@ -3,10 +3,11 @@ import numpy as np
 from wizard_card import Wizard_Card
 from scoring_functions import update_winning_card, score_round
 
+
 class Wizard_Game_State():
     """
     This class stores all relevant information about the current state of a Wizard game.
-    
+
     This includes:
         - number of players - (int) - `n_players`
         - round number - (int) - `round_number`
@@ -19,27 +20,27 @@ class Wizard_Game_State():
         - total points for each player - (list[int]) - `players_total_points`
         - public card states - (list[int]) - `public_card_states`
     """
-    def __init__(self, n_players: int, verbosity: int=0):
+    def __init__(self, n_players: int, verbosity: int = 0):
         self.n_players: int = n_players
         self.verbosity: int = verbosity
-        
+
         self.round_number = 1
         self.round_starting_player = np.random.randint(n_players)
         self.trump_card: Wizard_Card = None
-        self.trump_color: int = -1 # -1 = no trump
-        
+        self.trump_color: int = -1  # -1 = no trump
+
         self.tricks_to_be_played: int = 1
         self.trick_active_player = self.round_starting_player
         self.trick_winner_index: int = 0
-        
+
         self.cards_to_be_played = n_players
         self.winning_card: Wizard_Card = None
         self.serving_color: int = None
-        
+
         self.players_hands = None
         self.players_predictions = None
         self.players_won_tricks = np.zeros(n_players, dtype=np.int8)
-        self.players_point_history = np.zeros((60//n_players, n_players))
+        self.players_point_history = np.zeros((60 // n_players, n_players))
         self.players_total_points = np.zeros(n_players, dtype=np.int16)
 
         self.public_card_states = -np.ones(60, dtype=np.int8)
@@ -71,16 +72,16 @@ class Wizard_Game_State():
             print(f"player P{self.trick_active_player+1} played card {action}.")
         self.trick_winner_index, self.winning_card, self.serving_color = \
             update_winning_card(
-                player_index = self.trick_active_player,
-                new_card = action,
-                winner_index = self.trick_winner_index,
-                winning_card = self.winning_card,
-                serving_color = self.serving_color,
-                trump_color = self.trump_color)
+                player_index=self.trick_active_player,
+                new_card=action,
+                winner_index=self.trick_winner_index,
+                winning_card=self.winning_card,
+                serving_color=self.serving_color,
+                trump_color=self.trump_color)
         # increment active player index
-        self.trick_active_player = (self.trick_active_player+1) % self.n_players
+        self.trick_active_player = (self.trick_active_player + 1) % self.n_players
         # increment cards left to be played in the current trick
-        if self.cards_to_be_played > 1: # last card was played
+        if self.cards_to_be_played > 1:  # last card was played
             self.cards_to_be_played -= 1
             return_val = 0
         else:
@@ -96,7 +97,7 @@ class Wizard_Game_State():
         """
         Start the next trick and updates game state variables accordingly.
         If `self.verbosity` is at least 1, print the winner of the trick.
-        
+
         updated variables:
             - players_won_tricks
             - tricks_to_be_played
@@ -137,7 +138,7 @@ class Wizard_Game_State():
         """
         Start the next round and update game state variables accordingly.
         If `self.verbosity` is at least 1, print the winner of the round.
-        
+
         updated variables:
             - round_number
             - round_starting_player
@@ -151,7 +152,7 @@ class Wizard_Game_State():
             - players_won_tricks
             - public_card_states
         """
-        self.round_starting_player = (self.round_starting_player+1) % self.n_players
+        self.round_starting_player = (self.round_starting_player + 1) % self.n_players
         # set trump information
         self.trump_card = trump_card
         self.trump_color = trump_color
@@ -165,7 +166,7 @@ class Wizard_Game_State():
         # set card state information
         self.public_card_states = -np.ones(60, dtype=np.int8)
         if trump_card != None:
-            self.public_card_states[trump_card.raw_value] = -2 # trump card
+            self.public_card_states[trump_card.raw_value] = -2  # trump card
 
 
     def _end_round(self):
@@ -175,7 +176,7 @@ class Wizard_Game_State():
         # calculate points earned this round
         round_points = score_round(self.players_predictions, self.players_won_tricks)
         # save points in history
-        self.players_point_history[self.round_number-1,:] = round_points
+        self.players_point_history[self.round_number - 1, :] = round_points
         # add points to totals
         self.players_total_points += round_points
         # increment round number
@@ -189,26 +190,26 @@ class Wizard_Game_State():
     def get_state(self) -> dict:
         state_dict = {
             "n_players": self.n_players,
-            
+
             "round_number": self.round_number,
             "round_starting_player": self.round_starting_player,
             "trump_card": self.trump_card,
             "trump_color": self.trump_color,
-            
+
             "tricks_to_be_played": self.tricks_to_be_played,
             "trick_active_player": self.trick_active_player,
             "trick_winner_index": self.trick_winner_index,
-            
+
             "cards_to_be_played": self.cards_to_be_played,
             "winning_card": self.winning_card,
             "serving_color": self.serving_color,
-            
+
             "players_hands": self.players_hands,
             "players_predictions": self.players_predictions,
             "players_won_tricks": self.players_won_tricks,
             "players_point_history": self.players_point_history,
             "players_total_points": self.players_total_points,
-            
+
             "public_card_states": self.public_card_states
-            }
+        }
         return state_dict
