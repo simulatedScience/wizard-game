@@ -18,6 +18,7 @@ class Wizard_Card:
         self.color = -1 if self.value in (0, 14) else value // 15
         self.colors = ["#ff3333", "#dddd00", "#22dd22", "#5588ff", "#dddddd"]
 
+
     def __str__(self):
         if self.value == 0:  # jester
             return colored_text("J", self.colors[self.color])
@@ -25,8 +26,118 @@ class Wizard_Card:
             return colored_text("W", self.colors[self.color])
         return colored_text(str(self.value), self.colors[self.color])
 
+
     def __repr__(self):
         return str(self)
 
+
     def __hash__(self):
         return hash(self.raw_value)
+
+
+    def __eq__(self, other: "Wizard_Card") -> bool:
+        """
+        compare two `Wizard_Card` obejects first by color, then by value.
+
+        inputs:
+        -------
+            other (Wizard_Card): any wizard card object
+
+        Returns:
+            bool: whether or not `self` is considered to be less than `other`
+        """
+        if other is None:
+            return False
+        if self.color != other.color:
+            return False
+        if self.value != other.value:
+            return False
+        return True
+
+
+    def __lt__(self, other: "Wizard_Card") -> bool:
+        """
+        compare two `Wizard_Card` obejects first by color, then by value.
+
+        inputs:
+        -------
+            other (Wizard_Card): any wizard card object
+
+        Returns:
+            bool: whether or not `self` is considered to be `<` than `other`
+        """
+        if other is None:
+            return False
+        if -self.color > -other.color:
+            return False
+        if -self.color < -other.color:
+            return True
+        if self.value < other.value:  # color is equal
+            return True
+        return False
+
+
+    def __gt__(self, other: "Wizard_Card") -> bool:
+        """
+        compare two `Wizard_Card` obejects first by color, then by value.
+
+        inputs:
+        -------
+            other (Wizard_Card): any wizard card object
+
+        Returns:
+            bool: whether or not `self` is considered to be `>` than `other`
+        """
+        if other is None:
+            return False
+        if -self.color < -other.color:
+            return False
+        if -self.color > -other.color:
+            return True
+        if self.value > other.value:  # color is equal
+            return True
+        return False
+
+
+    def __le__(self, other: "Wizard_Card") -> bool:
+        """
+        compare two `Wizard_Card` obejects first by color, then by value.
+
+        inputs:
+        -------
+            other (Wizard_Card): any wizard card object
+
+        Returns:
+            bool: whether or not `self` is considered to be `<=` than `other`
+        """
+        if other is None:
+            return False
+        if -self.color > -other.color:
+            return False
+        if -self.color < -other.color:
+            return True
+        if self.value <= other.value:  # color is equal
+            return True
+        return False
+
+
+    def __ge__(self, other: "Wizard_Card") -> bool:
+        """
+        compare two `Wizard_Card` obejects first by color, then by value.
+
+        inputs:
+        -------
+            other (Wizard_Card): any wizard card object
+
+        Returns:
+            bool: whether or not `self` is considered to be `>=` than `other`
+        """
+        if other is None:
+            return False
+        if -self.color < -other.color:
+            return False
+        if -self.color > -other.color:
+            return True
+        if self.value >= other.value:  # color is equal
+            return True
+        return False

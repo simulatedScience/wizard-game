@@ -40,7 +40,7 @@ class Wizard_Game_State():
         self.players_hands = None
         self.players_predictions = None
         self.players_won_tricks = np.zeros(n_players, dtype=np.int8)
-        self.players_point_history = np.zeros((60 // n_players, n_players))
+        self.players_gained_points_history = np.zeros((60 // n_players, n_players))
         self.players_total_points = np.zeros(n_players, dtype=np.int16)
 
         self.public_card_states = -np.ones(60, dtype=np.int8)
@@ -66,7 +66,7 @@ class Wizard_Game_State():
         -------
             action (Wizard_Card): a card in the hand of the active player. `perform_action` does NOT check, whether this action is valid but assumes it is. Behaviour for invalid actions is undefined.
         """
-        self.players_hands.pop(action)
+        self.players_hands[self.trick_active_player].remove(action)
         self.public_card_states[action.raw_value] = self.trick_active_player
         if self.verbosity >= 2:
             print(f"player P{self.trick_active_player+1} played card {action}.")
@@ -176,14 +176,21 @@ class Wizard_Game_State():
         # calculate points earned this round
         round_points = score_round(self.players_predictions, self.players_won_tricks)
         # save points in history
-        self.players_point_history[self.round_number - 1, :] = round_points
+        self.players_gained_points_history[self.round_number - 1, :] = round_points
         # add points to totals
         self.players_total_points += round_points
         # increment round number
         self.round_number += 1
 
 
-    def set_predictions(self, predictions):
+    def set_predictions(self, predictions: "np.ndarray"):
+        """
+        save predictions
+
+        inputs:
+        -------
+            predictions (np.ndarray): predicted number of tricks for each player
+        """
         self.players_predictions = predictions
 
 
@@ -207,7 +214,7 @@ class Wizard_Game_State():
             "players_hands": self.players_hands,
             "players_predictions": self.players_predictions,
             "players_won_tricks": self.players_won_tricks,
-            "players_point_history": self.players_point_history,
+            "players_gained_points_history": self.players_gained_points_history,
             "players_total_points": self.players_total_points,
 
             "public_card_states": self.public_card_states

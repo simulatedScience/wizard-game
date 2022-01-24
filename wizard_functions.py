@@ -25,10 +25,32 @@ def get_hands(n_players: int, round_nbr: int) -> Tuple[list, Wizard_Card]:
     np.random.shuffle(deck)
     hands = [[]] * n_players
     for i in range(n_players):
-        hands[i] = deck[i * round_nbr:i * round_nbr + round_nbr]
+        hands[i] = sorted(deck[i * round_nbr:i * round_nbr + round_nbr])
     # determine trump for the round
     if n_players * round_nbr == 60:
         trump_card = None
     else:
         trump_card = deck[n_players * round_nbr]
+    # trump_card = Wizard_Card(14)
     return hands, trump_card
+
+
+def check_action_invalid(action, hand, serving_color):
+    """
+    check whether or not a given action is valid.
+    """
+    # check if the player had the played card
+    if not action in hand:
+        return True
+    # `serving_color == -1` -> every card is valid
+    if serving_color == -1:
+        return False
+    # check whether card is jester or wizard
+    if action.value in [0, 14]:
+        return False
+    # check whether the color is serving color
+    if action.color != serving_color:
+        for card in hand:
+            if card.color == serving_color:  # player had to serve
+                return True
+    return False
