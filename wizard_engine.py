@@ -2,7 +2,6 @@ from typing import List
 import numpy as np
 
 from colored_text import colored_text as colored
-from wizard_card import Wizard_Card
 from wizard_game_state import Wizard_Game_State
 from wizard_functions import get_hands
 import wizard_inputs as player_inputs

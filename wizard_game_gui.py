@@ -14,11 +14,24 @@ class Wizard_Game_Gui():
                  wizard_menu: Wizard_Menu_Gui,
                  n_players: int,
                  limit_choices: bool,
-                 max_rounds: int):
+                 max_rounds: int,
+                 ai_player_choices: list):
+        """
+        create a gui that handles playing a game of wizard with the given settings
+
+        inputs:
+        -------
+            wizard_menu (Wizard_Menu_Gui): The menu gui object provides the frame where the game is displayed and style settings from the menu gui are used.
+            n_players (int): number of players in the game
+            limit_choices (bool): whether or not to allow the number of bids can equal the number of tricks
+            max_rounds (int): number of rounds to be played
+            ai_player_choices (list) of (dict): settings for player names and whether to use AI to calculate actions during the game.
+        """
         self.wizard_menu = wizard_menu
         self.n_players = n_players
         self.limit_choices = limit_choices
         self.n_rounds = min(max_rounds, 60 // self.n_players) + 1
+        self.ai_player_choices = ai_player_choices
 
         self.master_window = self.wizard_menu.master_window
         self.gui_colors = self.wizard_menu.gui_colors
@@ -260,7 +273,7 @@ class Wizard_Game_Gui():
                 width=7,
                 bg=self.gui_colors["card_color"],
                 fg=self.gui_colors["white"],
-                text=f"Player{player_index+1}",
+                text=self.ai_player_choices[player_index]["player_name_var"],
                 font=("bold", "12", ""))
             player_label.grid(
                 sticky="s",
@@ -495,7 +508,7 @@ class Wizard_Game_Gui():
                 for player_index in range(game.n_players):
                     player_name_label = tk.Label(
                         master=self.played_cards_frame,
-                        text=f"Player {player_index + 1}")
+                        text=self.ai_player_choices[player_index]["player_name_var"])
                     self.wizard_menu.add_label_style(player_name_label)
                     player_name_label.grid(
                         row=0,
@@ -657,7 +670,7 @@ class Wizard_Game_Gui():
         winner_index = np.argmax(self.game_obj.players_total_points)
         winner_label = tk.Label(
             master=self.played_cards_frame,
-            text=f"Player {winner_index+1} won!\nCongratulations!")
+            text=f"{self.ai_player_choices[winner_index]['player_name_var']} won!\nCongratulations!")
         self.wizard_menu.add_label_style(winner_label, fontsize=24)
         winner_label.grid(
             sticky="n",
