@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-from wizard_ais.wizard_ai_classes import ai_trump_chooser_classes, ai_bids_chooser_classes, ai_trick_play_classes
+from wizard_ais.wizard_ai_classes import ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 
 if __name__ == "__main__":
@@ -21,9 +21,11 @@ class Wizard_Menu_Gui():
 
     self.menu_justification = "n"
     self.ai_mode_justification = "n"
-    self.trump_chooser_choices = ["human input"] + list(ai_trump_chooser_classes.keys())
-    self.bids_chooser_choices = ["human input"] + list(ai_bids_chooser_classes.keys())
-    self.trick_player_choices = ["human input"] + list(ai_trick_play_classes.keys())
+    self.trump_chooser_choices = ["human input"] + list(ai_trump_chooser_methods.keys())
+    self.bids_chooser_choices = ["human input"] + list(ai_bids_chooser_methods.keys())
+    self.trick_player_choices = ["human input"] + list(ai_trick_play_methods.keys())
+
+    self.default_player_mode = "smart random ai"
 
     # set up game settings variables
     self.n_players_var = tk.IntVar(self.master_window, value=3)
@@ -244,13 +246,13 @@ class Wizard_Menu_Gui():
           value=False)
       ai_trump_color_choice = tk.StringVar(
           master=self.master_window,
-          value="human input")
+          value=self.default_player_mode)
       ai_bids_choice = tk.StringVar(
           master=self.master_window,
-          value="human input")
+          value=self.default_player_mode)
       ai_trick_play = tk.StringVar(
           master=self.master_window,
-          value="human input")
+          value=self.default_player_mode)
       self.ai_mode_variables.append(
           {"player_name_var": player_name_var,
            "hints_var": ai_for_hints_var,

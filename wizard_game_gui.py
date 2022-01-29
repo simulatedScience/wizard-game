@@ -7,7 +7,8 @@ from wizard_card import Wizard_Card
 from wizard_game_state import Wizard_Game_State
 from wizard_menu_gui import Wizard_Menu_Gui
 from wizard_functions import get_hands, check_action_invalid
-from wizard_ais.wizard_ai_classes import ai_classes
+# imports for AI
+from wizard_ais.wizard_ai_classes import ai_classes, ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 
 class Wizard_Game_Gui():
@@ -34,6 +35,11 @@ class Wizard_Game_Gui():
     self.n_rounds = min(max_rounds, 60 // self.n_players) + 1
     self.ai_player_choices = ai_player_choices
 
+    self.end_of_trick_delay = 0.2  # in seconds
+    self.end_of_round_delay = 0.8  # in seconds
+    self.card_width = 160
+    self.card_height = 240
+
     self.master_window = self.wizard_menu.master_window
     self.gui_colors = self.wizard_menu.gui_colors
 
@@ -43,7 +49,6 @@ class Wizard_Game_Gui():
         2: "green",
         3: "blue",
         -1: "white"}
-    # self.master_window.configure(bg="#00ff00")
 
     self._open_game_window()
 
@@ -179,7 +184,10 @@ class Wizard_Game_Gui():
         master=self.trump_frame,
         bg=self.gui_colors["card_color"],
         highlightbackground=self.gui_colors["card_border"],
-        highlightthickness=5)
+        highlightthickness=5,
+        width=self.card_width,
+        height=self.card_height)
+    self.trump_card_frame.grid_propagate(False)
     self.trump_card_frame.grid(
         sticky="sw",
         row=0,
@@ -408,7 +416,7 @@ class Wizard_Game_Gui():
       self.played_cards_frame.columnconfigure(0, weight=1)
       self.played_cards_frame.columnconfigure(5, weight=1)
 
-      def on_click_trump(color_index: int):
+      def set_trump(color_index: int):
         """
         start a round with the given color as trump
 
@@ -422,21 +430,33 @@ class Wizard_Game_Gui():
         self.played_cards_frame.columnconfigure(5, weight=0)
         # start round
         self._start_round(game, hands, trump_card, int(color_index))
-      for color_index in range(4):
-        color_button_frame = tk.Frame(
-            master=self.played_cards_frame,
-            bg=self.gui_colors[self.card_color_to_str[color_index]],
-            height=174,
-            width=112,
-            highlightbackground=self.gui_colors["card_color"],
-            highlightthickness=5)
-        color_button_frame.grid(
-            sticky="n",
-            row=1,
-            column=color_index + 1,
-            padx=5,
-            pady=5)
-        color_button_frame.bind("<Button-1>", lambda _, i=color_index: on_click_trump(i))
+
+      player_mode = self.ai_player_choices[active_player]["trump_choice_var"]
+      if player_mode != "human input":
+        ai_trump_choice = ai_trump_chooser_methods[player_mode](
+            hands=hands,
+            game_state=game)
+        if self.ai_player_choices[active_player]["hints_var"] is False:
+          self.master_window.after(10, lambda: set_trump(color_index=ai_trump_choice))
+        else:
+          print(f"{ai_trump_choice=}")  # TODO: show ai trump hint in GUI
+      if self.ai_player_choices[active_player]["hints_var"] or player_mode == "human input":
+        # create buttons to choose trump color
+        for color_index in range(4):
+          color_button_frame = tk.Frame(
+              master=self.played_cards_frame,
+              bg=self.gui_colors[self.card_color_to_str[color_index]],
+              height=174,
+              width=112,
+              highlightbackground=self.gui_colors["card_color"],
+              highlightthickness=5)
+          color_button_frame.grid(
+              sticky="n",
+              row=1,
+              column=color_index + 1,
+              padx=5,
+              pady=5)
+          color_button_frame.bind("<Button-1>", lambda _, i=color_index: set_trump(i))
 
 
   def _start_round(self,
@@ -456,9 +476,8 @@ class Wizard_Game_Gui():
     """
     # show trump color
     if trump_card is None:
-      bg_color = -1
-    else:
-      bg_color = self.gui_colors[self.card_color_to_str[trump_color]]
+      trump_color = -1
+    bg_color = self.gui_colors[self.card_color_to_str[trump_color]]
     self.trump_color_frame.config(
         bg=bg_color)
     # start round in `game`
@@ -485,10 +504,7 @@ class Wizard_Game_Gui():
     self.played_cards_frame.columnconfigure(0, weight=1)
     self.played_cards_frame.columnconfigure(12, weight=1)
 
-    if self.ai_player_choices[player_index]["bids_choice_var"] == "human input":
-      self._show_hand(game.players_hands[player_index], player_index)
-
-    def on_click_bids(n_bids: int, player_index: int):
+    def set_bids(n_bids: int, player_index: int):
       """
       save the given number of predicted tricks and progress the game state (get prediction from next player or start tricks)
 
@@ -529,27 +545,49 @@ class Wizard_Game_Gui():
               padx=5,
               pady=(0, 15))
           self.player_bids_labels[player_index] = player_bids_label
+          card_width_frame = tk.Frame(
+              master=self.played_cards_frame,
+              width=self.card_width,
+              height=1,
+              bg=self.gui_colors["bg"])
+          card_width_frame.grid(
+              row=2,
+              column=player_index + 1,
+              padx=5)
         self._initialize_trick(game)
 
-    for n_bids in range(round_nbr + 1):
-      # implement special rule
-      if self.limit_choices \
-              and player_index == (game.round_starting_player - 1) % game.n_players \
-              and np.sum(self.predictions) + n_bids == round_nbr:
-        continue
-      bid_button = tk.Button(
-          master=self.played_cards_frame,
-          command=lambda i=n_bids: on_click_bids(i, player_index),
-          text=n_bids,
-          width=2)
-      self.wizard_menu.add_button_style(bid_button)
-      bid_button.grid(
-          sticky="nw",
-          row=n_bids // 11 + 1,
-          column=n_bids % 11 + 1,
-          padx=5,
-          pady=5
-      )
+    player_mode = self.ai_player_choices[player_index]["bids_choice_var"]
+    if player_mode != "human input":
+      ai_bid = ai_bids_chooser_methods[player_mode](
+          player_index=player_index,
+          game_state=game)
+      if self.ai_player_choices[player_index]["hints_var"] is False:
+        self.master_window.after(10, lambda: set_bids(n_bids=ai_bid, player_index=player_index))
+      else:
+        print(f"{ai_bid=}")  # TODO: show ai bid hint in GUI
+    if self.ai_player_choices[player_index]["hints_var"] or player_mode == "human input":
+      self._show_hand(game.players_hands[player_index], player_index)
+      # create buttons to place bitds
+      for n_bids in range(round_nbr + 1):
+        # implement special rule `n_bids != n_tricks`
+        if self.limit_choices \
+                and player_index == (game.round_starting_player - 1) % game.n_players \
+                and np.sum(self.predictions) + n_bids == round_nbr:
+          continue
+        bid_button = tk.Button(
+            master=self.played_cards_frame,
+            command=lambda i=n_bids: set_bids(i, player_index),
+            text=n_bids,
+            width=2)
+        self.wizard_menu.add_button_style(bid_button)
+        bid_button.grid(
+            sticky="nw",
+            row=n_bids // 11 + 1,
+            column=n_bids % 11 + 1,
+            padx=5,
+            pady=5
+        )
+
 
 
   def _initialize_trick(self, game: Wizard_Game_State):
@@ -571,10 +609,13 @@ class Wizard_Game_Gui():
           master=self.played_cards_frame,
           bg=self.gui_colors["card_color"],
           highlightbackground=self.gui_colors["card_border"],
-          highlightthickness=5)
+          highlightthickness=5,
+          width=self.card_width,
+          height=self.card_height)
+      played_card_frame.grid_propagate(False)
       played_card_frame.grid(
           sticky="nw",
-          row=2,
+          row=3,
           column=player_index + 1,
           padx=5,
           pady=0)
@@ -593,7 +634,18 @@ class Wizard_Game_Gui():
       game (Wizard_Game_State) - game state object
     """
     player_index = game.trick_active_player
-    self._show_hand(game.players_hands[player_index], player_index, clickable=True)
+
+    player_mode = self.ai_player_choices[player_index]["trick_play_var"]
+    if player_mode != "human input":
+      ai_action = ai_trick_play_methods[player_mode](
+          game_state=game)
+      if self.ai_player_choices[player_index]["hints_var"] is False:
+        self.master_window.after(10, lambda: self._perform_action(action=ai_action))
+      else:
+        print(f"{ai_action=}")  # TODO: show ai action hint in GUI
+    if self.ai_player_choices[player_index]["hints_var"] or player_mode == "human input":
+
+      self._show_hand(game.players_hands[player_index], player_index, clickable=True)
 
 
   def _check_action(self, action: Wizard_Card):
@@ -606,7 +658,7 @@ class Wizard_Game_Gui():
   def _perform_action(self, action: Wizard_Card):
     clear_frame(self.players_hand_frame)
 
-    print(action)
+    print(f"player {self.game_obj.trick_active_player+1} action: {action}")
 
     active_player = self.game_obj.trick_active_player
     played_card_frame = self.played_cards[active_player]
@@ -634,11 +686,12 @@ class Wizard_Game_Gui():
   def _end_trick(self, start_new_trick=True):
     # update won trick counter of the trick winner
     winner_label = self.player_bids_labels[self.game_obj.trick_winner_index]
+    print(f"winner of trick {self.game_obj.round_number-self.game_obj.tricks_to_be_played} in round {self.game_obj.round_number} is: player {self.game_obj.trick_winner_index+1}")
     old_text = winner_label["text"].split(" / ")
     new_won_tricks = 1 + int(old_text[0])
     winner_label.config(text=f"{new_won_tricks} / {old_text[1]}")
     self.played_cards_frame.update()
-    time.sleep(1)
+    time.sleep(self.end_of_trick_delay)
     if start_new_trick:
       self._initialize_trick(self.game_obj)
 
@@ -656,7 +709,7 @@ class Wizard_Game_Gui():
         player_points_label.config(
             fg=self.gui_colors["red"])
       player_points_label.config(text=value)
-
+    time.sleep(self.end_of_round_delay)
     if game.round_number < self.n_rounds:
       self._initialize_round(game, game.round_number)
     else:
@@ -713,23 +766,24 @@ class Wizard_Game_Gui():
     #     padx=0,
     #     pady=10)
 
-    card_width = 155
-    card_height = 260
     frame_width = self.master_window.winfo_width() - self.players_points_frame.winfo_width() - 100
     if len(hand) > 1:
-      card_x_shift = (frame_width - card_width) // (len(hand) - 1)
-      card_x_shift = min(card_x_shift, card_width)
+      card_x_shift = (frame_width - self.card_width) // (len(hand) - 1)
+      card_x_shift = min(card_x_shift, self.card_width)
     else:
       card_x_shift = 0
 
-    self.players_hand_frame.config(width=frame_width, height=card_height + 50),
+    self.players_hand_frame.config(width=frame_width, height=self.card_height + 50),
     x_position = 0
     for i, card in enumerate(hand):
       card_frame = tk.Frame(
           master=self.players_hand_frame,
           bg=self.gui_colors["card_color"],
           highlightbackground=self.gui_colors["card_border"],
-          highlightthickness=5)
+          highlightthickness=5,
+          width=self.card_width,
+          height=self.card_height)
+      card_frame.grid_propagate(False)
       card_frame.place(
           anchor="nw",
           x=x_position,
@@ -749,27 +803,27 @@ class Wizard_Game_Gui():
       frame (tk.Frame: - the frame that should be clickable
       card (Wizard_Card: - the card that is represented by the frame. When clicked, `self.check_action()` will be executed with this card as the argument.
     """
-    def on_enter(_):
+    def on_enter_card(_):
       frame.place(
           anchor="nw",
           x=frame.winfo_x(),
           y=frame.winfo_y() - 40)
       frame.config(highlightbackground=self.gui_colors["card_highlight_border"])
 
-    def on_leave(_):
+    def on_leave_card(_):
       frame.place(
           anchor="nw",
           x=frame.winfo_x(),
           y=frame.winfo_y() + 40)
       frame.config(highlightbackground=self.gui_colors["card_border"])
 
-    def on_click(_):
+    def on_click_card(_):
       # print(card)
       self._check_action(card)
 
-    frame.bind("<Enter>", on_enter)
-    frame.bind("<Leave>", on_leave)
-    frame.bind("<Button-1>", on_click)
+    frame.bind("<Enter>", on_enter_card)
+    frame.bind("<Leave>", on_leave_card)
+    frame.bind("<Button-1>", on_click_card)
 
 
   def _show_card(self, frame: tk.Frame, card: Wizard_Card):
@@ -823,14 +877,14 @@ class Wizard_Game_Gui():
         padx=(5, 0),
         pady=(5, 0))
 
-    big_card_value_label = tk.Label(
+    card_big_value_label = tk.Label(
         master=frame,
         text=card_text,
         width=2,
         bg=self.gui_colors["card_color"],
         fg=self.gui_colors[self.card_color_to_str[card.color]],
         font=(card_font, "25", ""))
-    big_card_value_label.grid(
+    card_big_value_label.grid(
         sticky="se",
         row=1,
         column=1,

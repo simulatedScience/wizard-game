@@ -13,7 +13,7 @@ class Wizard_Base_Ai():
     pass
 
 
-  def get_trump_color_choice(self, game_state: Wizard_Game_State) -> int:
+  def get_trump_color_choice(self, hands: list, game_state: Wizard_Game_State) -> int:
     """
     choose a trump color based on the current game state
 
@@ -47,7 +47,7 @@ class Wizard_Base_Ai():
     raise NotImplementedError("Bids prediction has not been implemented for this AI.")
 
 
-  def get_trick_action(game_state: Wizard_Game_State) -> Wizard_Card:
+  def get_trick_action(self, game_state: Wizard_Game_State) -> Wizard_Card:
     """
     choose a card to play from the hand based on the current game state
 
