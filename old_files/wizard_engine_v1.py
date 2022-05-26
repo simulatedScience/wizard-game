@@ -1,8 +1,8 @@
 from typing import Tuple, List
 import numpy as np
-from wizard_card import Wizard_Card
-from scoring_functions import score_round, score_trick
-from colored_text import colored_text as colored
+from pogram_files.wizard_card import Wizard_Card
+from pogram_files.scoring_functions import score_round, score_trick
+from pogram_files.colored_text import colored_text as colored
 
 
 class WizardGame():
