@@ -17,10 +17,10 @@ class Wizard_Game_Gui():
                n_players: int,
                limit_choices: bool,
                max_rounds: int,
-               ai_player_choices: list,
+               ai_player_types: list,
                sleep_times: dict = {
-                 "end_of_trick_delay":0.2,
-                 "end_of_round_delay":0.8}):
+                   "end_of_trick_delay": 0.2,
+                   "end_of_round_delay": 0.8}):
     """
     create a gui that handles playing a game of wizard with the given settings
 
@@ -39,7 +39,7 @@ class Wizard_Game_Gui():
     self.n_players = n_players
     self.limit_choices = limit_choices
     self.n_rounds = min(max_rounds, 60 // self.n_players) + 1
-    self.ai_player_choices = ai_player_choices
+    self.ai_player_types = ai_player_types
 
     self.end_of_trick_delay = sleep_times["end_of_trick_delay"]  # in seconds
     self.end_of_round_delay = sleep_times["end_of_round_delay"]  # in seconds
@@ -288,7 +288,7 @@ class Wizard_Game_Gui():
           width=7,
           bg=self.gui_colors["card_color"],
           fg=self.gui_colors["white"],
-          text=self.ai_player_choices[player_index]["player_name_var"],
+          text=self.ai_player_types[player_index]["player_name_var"],
           font=("bold", "12", ""))
       player_label.grid(
           sticky="s",
@@ -437,17 +437,17 @@ class Wizard_Game_Gui():
         # start round
         self._start_round(game, hands, trump_card, int(color_index))
 
-      player_mode = self.ai_player_choices[active_player]["trump_choice_var"]
+      player_mode = self.ai_player_types[active_player]["trump_choice_var"]
       if player_mode != "human input":
         ai_trump_choice = ai_trump_chooser_methods[player_mode](
             hands=hands,
             active_player=active_player,
             game_state=game)
-        if self.ai_player_choices[active_player]["hints_var"] is False:
+        if self.ai_player_types[active_player]["hints_var"] is False:
           self.master_window.after(10, lambda: set_trump(color_index=ai_trump_choice))
         else:
           print(f"{ai_trump_choice=}")  # TODO: show ai trump hint in GUI
-      if self.ai_player_choices[active_player]["hints_var"] or player_mode == "human input":
+      if self.ai_player_types[active_player]["hints_var"] or player_mode == "human input":
         # create buttons to choose trump color
         for color_index in range(4):
           color_button_frame = tk.Frame(
@@ -534,7 +534,7 @@ class Wizard_Game_Gui():
         for player_index in range(game.n_players):
           player_name_label = tk.Label(
               master=self.played_cards_frame,
-              text=self.ai_player_choices[player_index]["player_name_var"])
+              text=self.ai_player_types[player_index]["player_name_var"])
           self.wizard_menu.add_label_style(player_name_label)
           player_name_label.grid(
               row=0,
@@ -563,16 +563,16 @@ class Wizard_Game_Gui():
               padx=5)
         self._initialize_trick(game)
 
-    player_mode = self.ai_player_choices[player_index]["bids_choice_var"]
+    player_mode = self.ai_player_types[player_index]["bids_choice_var"]
     if player_mode != "human input":
       ai_bid = ai_bids_chooser_methods[player_mode](
           player_index=player_index,
           game_state=game)
-      if self.ai_player_choices[player_index]["hints_var"] is False:
+      if self.ai_player_types[player_index]["hints_var"] is False:
         self.master_window.after(10, lambda: set_bids(n_bids=ai_bid, player_index=player_index))
       else:
         print(f"{ai_bid=}")  # TODO: show ai bid hint in GUI
-    if self.ai_player_choices[player_index]["hints_var"] or player_mode == "human input":
+    if self.ai_player_types[player_index]["hints_var"] or player_mode == "human input":
       self._show_hand(game.players_hands[player_index], player_index)
       # create buttons to place bitds
       for n_bids in range(round_nbr + 1):
@@ -642,15 +642,15 @@ class Wizard_Game_Gui():
     """
     player_index = game.trick_active_player
 
-    player_mode = self.ai_player_choices[player_index]["trick_play_var"]
+    player_mode = self.ai_player_types[player_index]["trick_play_var"]
     if player_mode != "human input":
       ai_action = ai_trick_play_methods[player_mode](
           game_state=game)
-      if self.ai_player_choices[player_index]["hints_var"] is False:
+      if self.ai_player_types[player_index]["hints_var"] is False:
         self.master_window.after(10, lambda: self._perform_action(action=ai_action))
       else:
         print(f"{ai_action=}")  # TODO: show ai action hint in GUI
-    if self.ai_player_choices[player_index]["hints_var"] or player_mode == "human input":
+    if self.ai_player_types[player_index]["hints_var"] or player_mode == "human input":
 
       self._show_hand(game.players_hands[player_index], player_index, clickable=True)
 
@@ -733,7 +733,7 @@ class Wizard_Game_Gui():
     winner_index = np.argmax(self.game_obj.players_total_points)
     winner_label = tk.Label(
         master=self.played_cards_frame,
-        text=f"{self.ai_player_choices[winner_index]['player_name_var']} won!\nCongratulations!")
+        text=f"{self.ai_player_types[winner_index]['player_name_var']} won!\nCongratulations!")
     self.wizard_menu.add_label_style(winner_label, fontsize=24)
     winner_label.grid(
         sticky="n",
