@@ -1,7 +1,7 @@
 import numpy as np
 
-from pogram_files.wizard_card import Wizard_Card
-from pogram_files.scoring_functions import update_winning_card, score_round
+from program_files.wizard_card import Wizard_Card
+from program_files.scoring_functions import update_winning_card, score_round
 
 
 class Wizard_Game_State():

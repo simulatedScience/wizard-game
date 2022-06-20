@@ -1,5 +1,5 @@
 import numpy as np
-from pogram_files.wizard_card import Wizard_Card
+from program_files.wizard_card import Wizard_Card
 
 
 def print_compare(i, j, deck=tuple(Wizard_Card(i) for i in range(60))):

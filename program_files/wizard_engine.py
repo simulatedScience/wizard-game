@@ -8,10 +8,10 @@ version 0.2
 """
 import numpy as np
 
-from pogram_files.colored_text import colored_text as colored
-from pogram_files.wizard_game_state import Wizard_Game_State
-from pogram_files.wizard_functions import get_hands
-import pogram_files.wizard_inputs as player_inputs
+from program_files.colored_text import colored_text as colored
+from program_files.wizard_game_state import Wizard_Game_State
+from program_files.wizard_functions import get_hands
+import program_files.wizard_inputs as player_inputs
 
 
 class Wizard_Game():

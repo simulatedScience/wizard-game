@@ -11,7 +11,7 @@ import tkinter.ttk as ttk
 from .wizard_ais.wizard_ai_classes import ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 # if __name__ == "__main__":
-from pogram_files.wizard_game_gui import Wizard_Game_Gui
+from program_files.wizard_game_gui import Wizard_Game_Gui
 
 
 class Wizard_Menu_Gui():

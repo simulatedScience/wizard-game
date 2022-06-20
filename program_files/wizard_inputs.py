@@ -1,9 +1,9 @@
 import numpy as np
 
-from pogram_files.colored_text import colored_text as colored
-from pogram_files.colored_text import print_color_index
-from pogram_files.wizard_card import Wizard_Card
-from pogram_files.wizard_game_state import Wizard_Game_State
+from program_files.colored_text import colored_text as colored
+from program_files.colored_text import print_color_index
+from program_files.wizard_card import Wizard_Card
+from program_files.wizard_game_state import Wizard_Game_State
 
 
 def get_action_input(

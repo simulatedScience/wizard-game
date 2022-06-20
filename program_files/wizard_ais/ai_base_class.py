@@ -3,8 +3,8 @@ this module implements a base class for any AI for the wizard game.
 """
 
 
-from pogram_files.wizard_card import Wizard_Card
-from pogram_files.wizard_game_state import Wizard_Game_State
+from program_files.wizard_card import Wizard_Card
+from program_files.wizard_game_state import Wizard_Game_State
 
 
 class Wizard_Base_Ai():

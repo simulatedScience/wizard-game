@@ -1,10 +1,10 @@
 """
 tests for engine
 """
-from pogram_files.wizard_card import Wizard_Card
-import pogram_files.wizard_engine as engine
-from pogram_files.scoring_functions import score_trick
-from pogram_files.wizard_functions import get_hands
+from program_files.wizard_card import Wizard_Card
+import program_files.wizard_engine as engine
+from program_files.scoring_functions import score_trick
+from program_files.wizard_functions import get_hands
 
 
 def test_trick(trick, trump, correct_result):

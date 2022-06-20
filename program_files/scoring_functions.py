@@ -2,7 +2,7 @@
 this module includes
 """
 from typing import Tuple
-from pogram_files.wizard_card import Wizard_Card
+from program_files.wizard_card import Wizard_Card
 import numpy as np
 
 

@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Tuple
 
-from pogram_files.wizard_card import Wizard_Card
+from program_files.wizard_card import Wizard_Card
 
 
 def get_hands(n_players: int, round_nbr: int) -> Tuple[list, Wizard_Card]:

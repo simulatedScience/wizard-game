@@ -9,17 +9,18 @@ version 0.2
 """
 import numpy as np
 
-from pogram_files.wizard_game_state import Wizard_Game_State
-from pogram_files.wizard_functions import get_hands
-from pogram_files.wizard_ais.wizard_ai_classes import ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
+from program_files.wizard_game_state import Wizard_Game_State
+from program_files.wizard_functions import get_hands
+from program_files.wizard_ais.wizard_ai_classes import ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 
 class Wizard_Auto_Play():
   def __init__(self,
                n_players,
-               limit_choices: bool,
-               max_rounds: int,
-               ai_player_types: list):
+               ai_player_types: list,
+               limit_choices: bool = False,
+               max_rounds: int = 20,
+               shuffle_players: bool = False):
     """
     initialize auto-play setup
 
@@ -29,11 +30,13 @@ class Wizard_Auto_Play():
       limit_choices (bool): whether or not to allow the number of bids can equal the number of tricks
         max_rounds (int): number of rounds to be played
         ai_player_choices (list) of (dict): settings for player names  to use AI to calculate actions during the game.
+        shuffle_players (bool): whether to randomize the order of players between games for more general results.
     """
     self.n_players = n_players
     self.limit_choices = limit_choices
     self.n_rounds = min(max_rounds, 60 // self.n_players) + 1
     self.ai_player_types = ai_player_types
+    self.shuffle_players = shuffle_players
 
     self.games_played = 0
     self.set_history_variables(n_players, 0)
@@ -43,11 +46,13 @@ class Wizard_Auto_Play():
     self.average_scores: np.ndarray = np.zeros((n_games, n_players))
     self._score_sums: np.ndarray = np.zeros(n_players)
     self.relative_scores: np.ndarray = np.zeros(n_players)
-    self.win_counts: np.ndarray = np.zeros(n_players)
+    self._win_counts: np.ndarray = np.zeros(n_players)
     self.win_ratios: np.ndarray = np.zeros((n_games, n_players))
 
 
-  def auto_play_single_threaded(self, n_games: int, reset_stats: bool = True):
+  def auto_play_single_threaded(self, 
+      n_games: int, 
+      reset_stats: bool = True):
     """
     automatically play `n_games` with the set AIs and record the results in self.average_scores, self.relative_scores and self.win_ratios
 
@@ -73,39 +78,55 @@ class Wizard_Auto_Play():
       self.win_ratios = np.vstack(
           [self.win_ratios, np.zeros(n_games, self.n_players)])
 
+    if self.shuffle_players:
+      self.random_order = np.arange(self.n_players)
+
     for n in range(n_games_start, n_games_end):
-      player_scores = self.play_game()
+      if self.shuffle_players:
+        np.random.shuffle(self.random_order)
+        ai_player_types = [self.ai_player_types[i] for i in self.random_order]
+      else:
+        ai_player_types = self.ai_player_types
+      player_scores = self.play_game(ai_player_types)
       # update history variables
       self.games_played += 1
-      self._score_sums += player_scores
-      self.average_scores[n, :] = self._score_sums / self.games_played
-      self.win_counts += np.where(player_scores == np.max(player_scores))
-      self.win_ratios[n, :] = self.win_counts / np.sum(self.win_counts)
+      if self.shuffle_players:
+        self._score_sums[self.random_order] += player_scores
+        self.average_scores[n, :] = self._score_sums / self.games_played
+        self._win_counts[self.random_order] += player_scores == np.max(player_scores)
+        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
+      else:
+        self._score_sums += player_scores
+        self.average_scores[n, :] = self._score_sums / self.games_played
+        self._win_counts += player_scores == np.max(player_scores)
+        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
 
     return self.average_scores, self.win_ratios
 
 
-  def play_game(self):
+  def play_game(self, ai_player_types: list):
     """
     play one game with the rules set in `self`
     """
-    game = Wizard_Game_State(n_players=self.n_players, verbosity=2)
+    game = Wizard_Game_State(n_players=self.n_players, verbosity=0)
     for round_nbr in range(1, self.n_rounds):
-      self.play_round(round_nbr, game, self.limit_choices)
+      self.play_round(round_nbr, game, self.limit_choices, ai_player_types)
+    return game.players_total_points
 
-  def play_round(self, round_nbr: int, game: Wizard_Game_State, limit_choices: bool):
+
+  def play_round(self, round_nbr: int, game: Wizard_Game_State, limit_choices: bool, ai_player_types: list):
     """
     play the given round with `self.n_players` players.
     """
     # generate hands and determine trump
-    print(f"Starting round {round_nbr}")
+    # print(f"Starting round {round_nbr}")
     hands, trump_card = get_hands(game.n_players, round_nbr)
     if trump_card is None:
       trump_color = -1
     elif trump_card.value != 14:
       trump_color = trump_card.color
     else:  # trump card is a wizard -> player who "gave cards" determines trump
-      player_mode = self.ai_player_types[game.round_starting_player]["trump_choice_var"]
+      player_mode = ai_player_types[game.round_starting_player]["trump_choice_var"]
       trump_color = ai_trump_chooser_methods[player_mode](
           hands=hands,
           active_player=game.round_starting_player,
@@ -117,7 +138,7 @@ class Wizard_Auto_Play():
     predictions = np.zeros(game.n_players, dtype=np.int8)
     player_index = game.round_starting_player
     for _ in range(self.n_players):
-      player_mode = self.ai_player_types[game.player_index]["bids_choice_var"]
+      player_mode = ai_player_types[game.trick_active_player]["bids_choice_var"]
       ai_bid = ai_bids_chooser_methods[player_mode](
           player_index=player_index,
           game_state=game)
@@ -126,7 +147,16 @@ class Wizard_Auto_Play():
     game.set_predictions(predictions)
     # play tricks of the round
     while game.tricks_to_be_played > 0:
-      self.play_trick(game)
+      self.play_trick(game, ai_player_types)
 
-  def play_trick(self, game):
-    """play one trick and advance the game object accordingly"""
+
+  def play_trick(self, game, ai_player_types):
+    """
+    play one trick and advance the game object accordingly
+    """
+    game.start_trick()
+    for _ in range(game.n_players):
+      player_mode = ai_player_types[game.trick_active_player]["get_trick_action"]
+      action = ai_trick_play_methods[player_mode](
+          game_state=game)
+      game.perform_action(action)

@@ -1,4 +1,4 @@
-from pogram_files.colored_text import colored_text
+from program_files.colored_text import colored_text
 
 
 class Wizard_Card:

@@ -6,10 +6,10 @@ Techniques like Hindsight Experience Replay may be implemented later.
 import numpy as np
 import tensorflow.keras as keras
 
-from pogram_files.wizard_card import Wizard_Card
-from pogram_files.wizard_game_state import Wizard_Game_State
-from pogram_files.wizard_functions import check_action_invalid
-from pogram_files.scoring_functions import update_winning_card
+from program_files.wizard_card import Wizard_Card
+from program_files.wizard_game_state import Wizard_Game_State
+from program_files.wizard_functions import check_action_invalid
+from program_files.scoring_functions import update_winning_card
 
 
 class Basic_NN_Ai():

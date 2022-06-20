@@ -6,7 +6,7 @@ author: Sebastian Jost
 version 0.2
 """
 import tkinter as tk
-from pogram_files.wizard_menu_gui import Wizard_Menu_Gui
+from program_files.wizard_menu_gui import Wizard_Menu_Gui
 
 def main():
     wizard_gui = Wizard_Menu_Gui()

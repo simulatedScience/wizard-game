@@ -3,12 +3,12 @@ import time
 
 import numpy as np
 
-from pogram_files.wizard_card import Wizard_Card
-from pogram_files.wizard_game_state import Wizard_Game_State
+from program_files.wizard_card import Wizard_Card
+from program_files.wizard_game_state import Wizard_Game_State
 # from pogram_files.wizard_menu_gui import Wizard_Menu_Gui # only imported for type hints
-from pogram_files.wizard_functions import get_hands, check_action_invalid
+from program_files.wizard_functions import get_hands, check_action_invalid
 # imports for AI
-from pogram_files.wizard_ais.wizard_ai_classes import ai_classes, ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
+from program_files.wizard_ais.wizard_ai_classes import ai_classes, ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 
 class Wizard_Game_Gui():
