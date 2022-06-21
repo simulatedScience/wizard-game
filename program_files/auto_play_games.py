@@ -7,7 +7,10 @@ last edited: 26.05.2022
 author: Sebastian Jost
 version 0.2
 """
+import tkinter as tk
+
 import numpy as np
+import matplotlib.pyplot as plt
 
 from program_files.wizard_game_state import Wizard_Game_State
 from program_files.wizard_functions import get_hands
@@ -160,3 +163,27 @@ class Wizard_Auto_Play():
       action = ai_trick_play_methods[player_mode](
           game_state=game)
       game.perform_action(action)
+
+  def plot_results(self, tkinter_embedded: tk.Frame = None):
+    """
+    plot average scores and win ratios currently saved
+
+    inputs:
+    -------
+      tkinter_embedded (tkinter.Frame): a tkinter frame where the plot is to be shown. If none is given, the plot is shown in a seperate window created by matplotlib.
+    """
+    playernames = [f"Player {i+1}" for i in range(self.n_players)]
+    colors = ["#22dd22", "#00aaaa", "#5588ff", "#bb00bb", "#dd2222", "#ff8800"]
+    if tkinter_embedded is None:
+      fig, axes = plt.subplots(2, sharex=True)
+      ax1, ax2 = axes
+      for i in range(self.n_players):
+        ax1.plot(self.win_ratios[:, i], label=playernames[i], color=colors[i])
+        ax2.plot(self.average_scores[:, i], label=playernames[i], color=colors[i])
+      ax1.set_ylabel("win ratio")
+      ax2.set_xlabel("game number")
+      ax2.set_ylabel("average score")
+      ax1.grid(color="#dddddd")
+      ax2.grid(color="#dddddd")
+      ax2.legend(loc=(1.02,0.8))
+      plt.show()
