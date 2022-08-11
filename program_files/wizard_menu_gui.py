@@ -240,20 +240,36 @@ class Wizard_Menu_Gui():
     self.add_sleep_time_inputs()
     row_index += 1
 
-    # play button
-    play_button = tk.Button(
+    game_start_frame = tk.Frame(
         master=self.main_frame,
-        text="Start game!",
-        command=self.check_menu_inputs)
-    self.add_button_style(play_button)
-    play_button.grid(
+        bg=self.gui_colors["bg"])
+    game_start_frame.grid(
         sticky=self.menu_justification,
         row=row_index,
         column=0,
         padx=0,
         pady=5)
     row_index += 1
+    # play button
+    play_button = tk.Button(
+        master=game_start_frame,
+        text="Start game!",
+        command=self.check_menu_inputs_regular)
+    self.add_button_style(play_button)
+    play_button.grid(
+        row=0,
+        column=1,
+        padx=(5, 0))
 
+    auto_play_button = tk.Button(
+        master=game_start_frame,
+        text="Compare AIs",
+        command=self.check_menu_inputs_ai)
+    self.add_button_style(auto_play_button)
+    auto_play_button.grid(
+        row=0,
+        column=0,
+        padx=(0, 5))
 
   def init_ai_mode_variables(self):
     """
@@ -473,7 +489,7 @@ class Wizard_Menu_Gui():
         padx=(5, 0),
         pady=(5, 0))
 
-  def check_menu_inputs(self) -> bool:
+  def check_menu_inputs_regular(self) -> bool:
     """
     Check that all inputs in the menu have valid values.
     If they do, start the game with the given settings.
@@ -499,6 +515,34 @@ class Wizard_Menu_Gui():
     self.start_game(n_players, limit_choices, max_rounds, ai_player_choices, sleeptimes)
     return True
 
+
+  def check_menu_inputs_ai(self) -> bool:
+    """
+    Check that all inputs in the menu have valid values.
+    If they do, start the game with the given settings.
+    """
+    try:
+      max_rounds = self.max_rounds_var.get()
+    except tk.TclError:
+      return False
+    if max_rounds < 1:
+      return False  # game start not successful
+    n_players = self.n_players_var.get()
+    limit_choices = not self.limit_choices_var.get()
+    ai_player_choices = [
+        {key: var.get() for key, var in var_dict.items()}
+        for var_dict in self.ai_mode_variables]
+    for modes_dict in ai_player_choices:
+      if "human input" in modes_dict.values():
+        return False
+    sleeptimes = {
+        "end_of_trick_delay": self.trick_sleep_time.get(),
+        "end_of_round_delay": self.round_sleep_time.get()}
+    # # DEBUG:
+    # for var_dict in ai_player_choices:
+    #     print(var_dict)
+    self.start_game(n_players, limit_choices, max_rounds, ai_player_choices, sleeptimes)
+    return True
 
   def start_game(self,
                  n_players: int,

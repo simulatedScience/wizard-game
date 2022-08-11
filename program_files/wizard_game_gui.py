@@ -46,6 +46,8 @@ class Wizard_Game_Gui():
     self.card_width = 160
     self.card_height = 240
 
+    self.trick_players = set()
+
     self.master_window = self.wizard_menu.master_window
     self.gui_colors = self.wizard_menu.gui_colors
 
@@ -73,7 +75,7 @@ class Wizard_Game_Gui():
     self.main_game_frame.grid_columnconfigure(0, weight=1)
     self.main_game_frame.grid_rowconfigure(0, weight=1)
 
-    def close_game(_):
+    def close_game(*_):
       """
       close game frame and reopen the menu.
       """
@@ -666,6 +668,7 @@ class Wizard_Game_Gui():
     clear_frame(self.players_hand_frame)
 
     print(f"player {self.game_obj.trick_active_player+1} action: {action}")
+    self.trick_players.add(self.game_obj.trick_active_player)
 
     active_player = self.game_obj.trick_active_player
     played_card_frame = self.played_cards[active_player]
@@ -691,6 +694,8 @@ class Wizard_Game_Gui():
 
 
   def _end_trick(self, start_new_trick=True):
+    assert len(self.trick_players) == self.n_players
+    self.trick_players = set()
     # update won trick counter of the trick winner
     winner_label = self.player_bids_labels[self.game_obj.trick_winner_index]
     print(f"winner of trick {self.game_obj.round_number-self.game_obj.tricks_to_be_played} in round {self.game_obj.round_number} is: player {self.game_obj.trick_winner_index+1}")

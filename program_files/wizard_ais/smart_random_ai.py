@@ -17,7 +17,7 @@ class Smart_Random_Ai():
   def get_trump_color_choice(self, hands: list, active_player: int, game_state: Wizard_Game_State) -> int:
     """
     choose a trump color based on the current game state
-    return random card color weighted with the number of cards from each color
+    return random card color weighted with the sum of card values from each color
 
     inputs:
     -------
@@ -35,7 +35,7 @@ class Smart_Random_Ai():
     # calculate weights for each color
     color_weights = np.zeros(4, dtype=np.float64)
     for i, _ in enumerate(color_weights):
-      color_weights[i] = len([card for card in hand if card.color == i])
+      color_weights[i] = sum([card.value for card in hand if card.color == i])
     s = np.sum(color_weights)
     if s == 0:  # choose uniform random color if no card on hand has a color
       return np.random.choice((0, 1, 2, 3))
@@ -59,7 +59,7 @@ class Smart_Random_Ai():
     """
     random_bid = round(np.random.normal(
         loc=game_state.round_number / game_state.n_players,
-        scale=game_state.round_number / game_state.n_players / 2))
+        scale=game_state.round_number / game_state.n_players / 5))
     if random_bid < 0:
       return 0
     if random_bid > game_state.round_number:

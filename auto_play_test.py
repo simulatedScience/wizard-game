@@ -48,10 +48,12 @@ def main():
        ],
     n_players=6)
   stats = auto_play_class.auto_play_single_threaded(
-    n_games=5000, reset_stats=True)
+    n_games=30000, reset_stats=True)
   print("average scores:\n", stats[0][-5:-1])
   print("win ratios:\n", stats[1][-5:-1])
   auto_play_class.plot_results()
 
 if __name__ == "__main__":
+  # import matplotlib.pyplot as plt
+  # help(plt.legend)
   main()

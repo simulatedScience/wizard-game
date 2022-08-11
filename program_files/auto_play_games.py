@@ -164,7 +164,23 @@ class Wizard_Auto_Play():
           game_state=game)
       game.perform_action(action)
 
-  def plot_results(self, tkinter_embedded: tk.Frame = None):
+  def get_player_labels(self):
+    """
+    generate labels for each player including their name and all AI types used
+
+    Returns:
+        list: list of multiline strings containing player information
+    """
+    player_labels = [""]*6
+    for i in range(self.n_players):
+      player_label = f"Player {i+1}\n"
+      player_label += f"trump: {self.ai_player_types[i]['trump_choice_var']}\n"
+      player_label += f"bids:  {self.ai_player_types[i]['bids_choice_var']}\n"
+      player_label += f"trick: {self.ai_player_types[i]['get_trick_action']}"
+      player_labels[i] = player_label
+    return player_labels
+
+  def plot_results(self, tkinter_embedded: tk.Frame = None, highlight_final_value=True):
     """
     plot average scores and win ratios currently saved
 
@@ -172,18 +188,33 @@ class Wizard_Auto_Play():
     -------
       tkinter_embedded (tkinter.Frame): a tkinter frame where the plot is to be shown. If none is given, the plot is shown in a seperate window created by matplotlib.
     """
-    playernames = [f"Player {i+1}" for i in range(self.n_players)]
+    player_labels = self.get_player_labels()
     colors = ["#22dd22", "#00aaaa", "#5588ff", "#bb00bb", "#dd2222", "#ff8800"]
     if tkinter_embedded is None:
       fig, axes = plt.subplots(2, sharex=True)
       ax1, ax2 = axes
       for i in range(self.n_players):
-        ax1.plot(self.win_ratios[:, i], label=playernames[i], color=colors[i])
-        ax2.plot(self.average_scores[:, i], label=playernames[i], color=colors[i])
+        ax1.plot(self.win_ratios[:, i], label=player_labels[i], color=colors[i], alpha=0.5)
+        ax1.hlines(
+            (self.win_ratios[-1, i],),
+            xmin=0,
+            xmax=self.games_played,
+            linestyle="--",
+            color=colors[i])
+            # label=self.win_ratios[-1,i])
+        ax2.plot(self.average_scores[:, i], label=player_labels[i], color=colors[i], alpha=0.5)
+        ax2.hlines(
+            (self.average_scores[-1, i],),
+            xmin=0,
+            xmax=self.games_played,
+            linestyle="--",
+            color=colors[i])
+            # label=self.average_scores[-1,i])
       ax1.set_ylabel("win ratio")
       ax2.set_xlabel("game number")
       ax2.set_ylabel("average score")
       ax1.grid(color="#dddddd")
       ax2.grid(color="#dddddd")
-      ax2.legend(loc=(1.02,0.8))
+      ax2.legend(loc="center left", bbox_to_anchor=(1.02, 1.02))
+      # ax2.legend(loc="center right")
       plt.show()
