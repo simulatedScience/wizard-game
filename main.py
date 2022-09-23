@@ -6,10 +6,10 @@ author: Sebastian Jost
 version 0.2
 """
 import tkinter as tk
-from program_files.wizard_menu_gui import Wizard_Menu_Gui
+from program_files.menu_gui import Menu_Gui
 
 def main():
-    wizard_gui = Wizard_Menu_Gui()
+    wizard_gui = Menu_Gui()
     tk.mainloop()
 
 if __name__ == "__main__":

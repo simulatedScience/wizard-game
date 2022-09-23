@@ -9,9 +9,9 @@ version 0.2
 import numpy as np
 
 from program_files.colored_text import colored_text as colored
-from program_files.wizard_game_state import Wizard_Game_State
-from program_files.wizard_functions import get_hands
-import program_files.wizard_inputs as player_inputs
+from program_files.game_state import Game_State
+from program_files.helper_functions import get_hands
+import program_files.wizard_console_inputs as player_inputs
 
 
 class Wizard_Game():
@@ -51,7 +51,7 @@ class Wizard_Game():
             #         Whoever plays this card can choose it's color.
         """
         # initialize object to save the game state
-        game = Wizard_Game_State(n_players=self.n_players, verbosity=2)
+        game = Game_State(n_players=self.n_players, verbosity=2)
         n_rounds = min(max_rounds, 60 // self.n_players) + 1
         for round_nbr in range(1, n_rounds):
             self.play_round(round_nbr, game, limit_choices)
@@ -59,7 +59,7 @@ class Wizard_Game():
         self.print_game_results(game)
 
 
-    def play_round(self, round_nbr: int, game: Wizard_Game_State, limit_choices: bool):
+    def play_round(self, round_nbr: int, game: Game_State, limit_choices: bool):
         """
         play the given round with `self.n_players` players.
         """
@@ -84,7 +84,7 @@ class Wizard_Game():
 
 
     def play_trick(self,
-                   game: Wizard_Game_State,
+                   game: Game_State,
                    ) -> int:
         """
         play one trick
@@ -95,7 +95,7 @@ class Wizard_Game():
             game.perform_action(action)
 
 
-    def print_game_results(self, game: Wizard_Game_State):
+    def print_game_results(self, game: Game_State):
         """
         print history and results of a wizard game.
 

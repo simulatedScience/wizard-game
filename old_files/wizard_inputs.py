@@ -3,11 +3,11 @@ import numpy as np
 from program_files.colored_text import colored_text as colored
 from program_files.colored_text import print_color_index
 from program_files.wizard_card import Wizard_Card
-from program_files.wizard_game_state import Wizard_Game_State
+from program_files.game_state import Game_State
 
 
 def get_action_input(
-        game: Wizard_Game_State) -> Wizard_Card:
+        game: Game_State) -> Wizard_Card:
     """
     get an input from player `player`
     """
@@ -78,7 +78,7 @@ def __action_input(hand: list) -> Wizard_Card:
     return None
 
 
-def get_predictions(game: Wizard_Game_State, round_nbr: int, limit_choices: bool = False):
+def get_predictions(game: Game_State, round_nbr: int, limit_choices: bool = False):
     """
     get predicted number of tricks from each player
 

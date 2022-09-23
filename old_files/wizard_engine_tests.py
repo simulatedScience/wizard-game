@@ -4,7 +4,7 @@ tests for engine
 from program_files.wizard_card import Wizard_Card
 import program_files.wizard_engine as engine
 from program_files.scoring_functions import score_trick
-from program_files.wizard_functions import get_hands
+from program_files.helper_functions import get_hands
 
 
 def test_trick(trick, trump, correct_result):

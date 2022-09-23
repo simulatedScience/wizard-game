@@ -11,10 +11,10 @@ import tkinter.ttk as ttk
 from .wizard_ais.wizard_ai_classes import ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 # if __name__ == "__main__":
-from program_files.wizard_game_gui import Wizard_Game_Gui
+from program_files.game_gui import Game_Gui
 
 
-class Wizard_Menu_Gui():
+class Menu_Gui():
   """
   A Menu for the wizard card game that allows setting all rules and starting games.
   """
@@ -551,7 +551,7 @@ class Wizard_Menu_Gui():
                  ai_player_choices: list,
                  sleep_times: dict) -> None:
     self.main_frame.destroy()
-    game_gui = Wizard_Game_Gui(
+    game_gui = Game_Gui(
         self,
         n_players,
         limit_choices,
@@ -633,5 +633,5 @@ class Wizard_Menu_Gui():
 
 
 if __name__ == "__main__":
-  wizard_gui = Wizard_Menu_Gui()
+  wizard_gui = Menu_Gui()
   tk.mainloop()

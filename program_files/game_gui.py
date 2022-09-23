@@ -4,16 +4,16 @@ import time
 import numpy as np
 
 from program_files.wizard_card import Wizard_Card
-from program_files.wizard_game_state import Wizard_Game_State
+from program_files.game_state import Game_State
 # from pogram_files.wizard_menu_gui import Wizard_Menu_Gui # only imported for type hints
-from program_files.wizard_functions import get_hands, check_action_invalid
+from program_files.helper_functions import get_hands, check_action_invalid
 # imports for AI
 from program_files.wizard_ais.wizard_ai_classes import ai_classes, ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 
-class Wizard_Game_Gui():
+class Game_Gui():
   def __init__(self,
-               wizard_menu: "Wizard_Menu_Gui",
+               wizard_menu: "Menu_Gui",
                n_players: int,
                limit_choices: bool,
                max_rounds: int,
@@ -367,14 +367,14 @@ class Wizard_Game_Gui():
     """
     create a `Wizard_Game_State` object and start the game by allowing player action inputs.
     """
-    self.game_obj = Wizard_Game_State(self.n_players, verbosity=0)
+    self.game_obj = Game_State(self.n_players, verbosity=0)
     # for round_nbr in range(1, self.n_rounds):
     round_nbr = self.game_obj.round_number
     self._initialize_round(self.game_obj, round_nbr)
 
 
   def _initialize_round(self,
-                        game: Wizard_Game_State,
+                        game: Game_State,
                         round_nbr: int):
     """
     play round `round_nbr` with the rules saved in `self`
@@ -395,7 +395,7 @@ class Wizard_Game_Gui():
 
 
   def _determine_trump(self,
-                       game: Wizard_Game_State,
+                       game: Game_State,
                        hands: list,
                        trump_card: Wizard_Card):
     # show trump card
@@ -469,7 +469,7 @@ class Wizard_Game_Gui():
 
 
   def _start_round(self,
-                   game: Wizard_Game_State,
+                   game: Game_State,
                    hands: list,
                    trump_card: Wizard_Card,
                    trump_color: int):
@@ -497,7 +497,7 @@ class Wizard_Game_Gui():
 
 
   def _get_player_prediction(self,
-                             game: Wizard_Game_State,
+                             game: Game_State,
                              round_nbr: int,
                              player_index: int):
     clear_frame(self.played_cards_frame)
@@ -599,7 +599,7 @@ class Wizard_Game_Gui():
 
 
 
-  def _initialize_trick(self, game: Wizard_Game_State):
+  def _initialize_trick(self, game: Game_State):
     """
     set up everything for playing a trick
 
@@ -634,7 +634,7 @@ class Wizard_Game_Gui():
     self._play_trick(game)
 
 
-  def _play_trick(self, game: Wizard_Game_State):
+  def _play_trick(self, game: Game_State):
     """
     start playing a trick
 
