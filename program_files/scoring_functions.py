@@ -64,14 +64,14 @@ def update_winning_card(
   return winner_index, winning_card, serving_color
 
 
-def score_trick(played_cards: list, trump: int) -> int:
+def score_trick(played_cards: list[Wizard_Card], trump: int) -> int:
   """
   calculate the winner at the end of a given trick.
   - The Jester always loses unless there are only jesters played. Then the first player wins.
   - The first played wizard always wins.
   - Any trump cards are always better than non-trump.
   - Higher card values win over lower ones.
-  - no trump can be given by setting trump to anythin other than 0,1,2 and 3.
+  - no trump can be given by setting trump to anything other than 0,1,2 and 3.
 
   inputs:
   -------
@@ -84,20 +84,28 @@ def score_trick(played_cards: list, trump: int) -> int:
   """
   winner = 0
   winning_card = played_cards[0]
+  if winning_card.value == 14:
+    return winner # first player won with wizard
   for i, card in enumerate(played_cards[1:]):
     # check wizard
     if card.value == 14 and winning_card.value < 14:
       return i + 1
+    # check if winning card is jester
+    if winning_card.value == 0 and card.value > 0:
+      winner = i + 1
+      winning_card = card
+      continue
     # check jester
     if card.value == 0:
       continue
+    assert card.color != -1
     # check trump card when current winner is not trump
-    elif card.color == trump and winning_card.color != trump:
+    if card.color == trump and winning_card.color != trump:
       winner = i + 1
       winning_card = card
       continue
     # check regular card and (trump card if current winner is trump)
-    elif card.color == winning_card.color and card.value > winning_card.value:
+    if card.color == winning_card.color and card.value > winning_card.value:
       winner = i + 1
       winning_card = card
   return winner
