@@ -8,6 +8,7 @@ author: Sebastian Jost
 version 0.2
 """
 import tkinter as tk
+import multiprocessing as mp
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -53,7 +54,7 @@ class Wizard_Auto_Play():
     self.win_ratios: np.ndarray = np.zeros((n_games, n_players))
 
 
-  def auto_play_single_threaded(self, 
+  def auto_play_single_threaded(self,
       n_games: int, 
       reset_stats: bool = True):
     """
@@ -66,7 +67,7 @@ class Wizard_Auto_Play():
         reset_stats (bool): whether to start counting at 0 or continue counting old scores
 
     returns:
-        (np.ndarray): average scores for eac player
+        (np.ndarray): average scores for each player
         (np.ndarray): win ratio for each player
     """
     if reset_stats:  # reset statistics
@@ -103,6 +104,72 @@ class Wizard_Auto_Play():
         self.average_scores[n, :] = self._score_sums / self.games_played
         self._win_counts += player_scores == np.max(player_scores)
         self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
+
+    return self.average_scores, self.win_ratios
+
+
+  def play_record_game(self, n: int) -> np.ndarray:
+    if self.shuffle_players:
+      np.random.shuffle(self.random_order)
+      ai_player_types = [self.ai_player_types[i] for i in self.random_order]
+    else:
+      ai_player_types = self.ai_player_types
+    player_scores = self.play_game(ai_player_types)
+    player_scores[self.random_order] = player_scores # record results in proper order
+    return player_scores
+
+
+  def auto_play_multi_threaded(self, 
+      n_games: int, 
+      reset_stats: bool = True):
+    """
+    automatically play `n_games` with the set AIs and record the results in self.average_scores, self.relative_scores and self.win_ratios
+
+    This method uses only one thread and runs all games one after the other.
+
+    Args:
+        n_games (int): number of games to be played
+        reset_stats (bool): whether to start counting at 0 or continue counting old scores
+
+    returns:
+        (np.ndarray): average scores for each player
+        (np.ndarray): win ratio for each player
+    """
+    if reset_stats:  # reset statistics
+      self.set_history_variables(self.n_players, n_games)
+      n_games_start = 0
+      n_games_end = n_games
+    else:  # continue counting with old scores
+      n_games_start = self.average_scores.shape[0]
+      n_games_end = n_games_start + n_games
+      self.average_scores = np.vstack(
+          [self.win_ratios, np.zeros(n_games, self.n_players)])
+      self.win_ratios = np.vstack(
+          [self.win_ratios, np.zeros(n_games, self.n_players)])
+
+    if self.shuffle_players:
+      self.random_order = np.arange(self.n_players)
+
+    process_pool: mp.Pool = mp.Pool(mp.cpu_count() * 2)
+    new_results = process_pool.map(self.play_record_game, range(n_games_start, n_games_end))
+    process_pool.close()
+    process_pool.join()
+
+    # update history variables
+    for i, player_scores in enumerate(new_results):
+      n = i + n_games_start
+      self.games_played += 1
+      if self.shuffle_players:
+        self._score_sums += player_scores
+        self.average_scores[n, :] = self._score_sums / self.games_played
+        self._win_counts += player_scores == np.max(player_scores)
+        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
+      else:
+        self._score_sums += player_scores
+        self.average_scores[n, :] = self._score_sums / self.games_played
+        self._win_counts += player_scores == np.max(player_scores)
+        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
+      
 
     return self.average_scores, self.win_ratios
 
