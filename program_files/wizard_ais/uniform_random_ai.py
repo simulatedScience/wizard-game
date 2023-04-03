@@ -2,11 +2,11 @@ import random
 
 from program_files.wizard_card import Wizard_Card
 from program_files.game_state import Game_State
+from program_files.wizard_ais.ai_base_class import Wizard_Base_Ai
 from program_files.helper_functions import check_action_invalid
-# from .ai_base_class import Wizard_Base_Ai
 
 
-class Uniform_Random_Ai():
+class Uniform_Random_Ai(Wizard_Base_Ai):
   name = "uniform random ai"
   def __init__(self):
     # super().__init__()

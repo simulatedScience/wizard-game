@@ -32,6 +32,9 @@ class Wizard_Card:
 
 
   def __hash__(self):
+    """
+    return a hash value for `self` based on `self.raw_value` (hash of int 0-59)
+    """
     return hash(self.raw_value)
 
 

@@ -3,11 +3,12 @@ import numpy as np
 
 from program_files.wizard_card import Wizard_Card
 from program_files.game_state import Game_State
+from program_files.wizard_ais.ai_base_class import Wizard_Base_Ai
 from program_files.helper_functions import check_action_invalid
 from program_files.scoring_functions import update_winning_card
 
 
-class Simple_Rule_Ai():
+class Simple_Rule_Ai(Wizard_Base_Ai):
   name = "simple rule ai"
   def __init__(self):
     # super().__init__()
@@ -123,9 +124,23 @@ class Simple_Rule_Ai():
 
 
   def _get_winning_actions(self,
-                           valid_actions: list,
-                           card_values: list,
-                           game_state: Game_State):
+      valid_actions: list,
+      card_values: list,
+      game_state: Game_State):
+    """
+    determine which actions are winning and which are loosing
+
+    inputs:
+    -------
+        valid_actions (list): list of valid actions
+        card_values (list): list of values for each valid action
+        game_state (Wizard_Game_State): object representing the current state of the game
+
+    returns:
+    --------
+        (dict): dictionary of loosing actions and their values
+        (dict): dictionary of winning actions and their values
+    """
     if game_state.cards_to_be_played == game_state.get_state_dict:
       # all actions win.
       return list(), valid_actions

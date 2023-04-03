@@ -8,8 +8,8 @@ from program_files.game_state import Game_State
 
 
 class Wizard_Base_Ai():
+  name = "base ai class"
   def __init__(self):
-    # self.name = name
     pass
 
 
