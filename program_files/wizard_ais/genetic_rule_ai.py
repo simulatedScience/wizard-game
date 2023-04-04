@@ -12,7 +12,23 @@ from program_files.scoring_functions import update_winning_card
 class Genetic_Rule_Ai():
   name = "genetic rule ai"
   def __init__(self):
-    raise NotImplementedError
+    self.player = Genetic_Wizard_Player(
+      color_sum_weight = -0.3211434016721016,
+      color_number_weight = 0.2567452912923557,
+      min_value_for_win = 8.117944297026984,
+      min_trump_value_for_win = 8.629723069341596,
+      round_factor = -0.20787805774242502,
+      jester_factor = 0.22664553694594283,
+      prediction_factor = 0.4194686380357965,
+      trump_value_increase = 8.082702696052182,
+      wizard_value = 22.964320913283263,
+      n_cards_factor = -0.7932837514707028,
+      remaining_cards_factor = -0.7763639761952872,
+    )
+    self.get_prediction = self.player.get_prediction
+    self.get_trump_color_choice = self.player.get_trump_color_choice
+    self.get_trick_action = self.player.get_trick_action
+
 
 
 class Genetic_Wizard_Player(Wizard_Base_Ai):
@@ -29,7 +45,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
       Also add the number of jesters multiplied with `jester_factor`.
       Finally multiply the result by `prediction_factor` and round down to the nearest integer (if that is a valid bid).
       As a formula:
-        `int((n_non_trumps * min_value_for_win + n_trumps * min_trump_value_for_win + n_wizards + n_jesters * jester_factor) * prediction_factor)`
+        `int((n_non_trumps + n_trumps + round_factor * round_number + n_wizards + n_jesters * jester_factor) * prediction_factor)`
   - trick play:
       To choose an action, assign each card on the player's hand a value. If the player still needs to win tricks, play the card with lowest value that still wins,
       otherwise play the card with highest value that still loses. If no card currently loses, play the card with lowest value.
@@ -124,7 +140,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     # choose the color with the highest value
     return max(color_values, key=color_values.get)
 
-  def get_bid(self, game_state: Game_State) -> int:
+  def get_prediction(self, player_index: int, game_state: Game_State) -> int:
     """
     Choose the number of predicted tricks based on the current game state.
 
@@ -133,7 +149,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     Also add the number of jesters multiplied with `jester_factor`.
     Finally multiply the result by `prediction_factor` and round down to the nearest integer (if that is a valid bid).
     As a formula:
-      `int((n_non_trumps * min_value_for_win + n_trumps * min_trump_value_for_win + n_wizards + n_jesters * jester_factor) * prediction_factor)`
+      `int((n_non_trumps + n_trumps + round_factor * round_number + n_wizards + n_jesters * jester_factor) * prediction_factor)`
 
     inputs:
     -------
@@ -143,7 +159,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     --------
         int: The number of predicted tricks.
     """
-    hand: list[Wizard_Card] = game_state.players_hands[game_state.current_player]
+    hand: list[Wizard_Card] = game_state.players_hands[player_index]
     # count the number of non-trump cards with values above `min_value_for_win`
     n_non_trumps: int = len([card for card in hand if card.color != game_state.trump_color and card.value >= self.min_value_for_win])
     # count the number of trump cards with values above `min_trump_value_for_win`
@@ -153,17 +169,42 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     # count the number of jesters
     n_jesters: int = len([card for card in hand if card.value == 0])
     # calculate the bid
-    bid: int = int((n_non_trumps * self.min_value_for_win
+    bid: int = int((n_non_trumps
+               + n_trumps
                + self.round_factor * game_state.round_number
-               + n_trumps * self.min_trump_value_for_win
-               + n_wizards + n_jesters * self.jester_factor)
+               + n_wizards
+               + n_jesters * self.jester_factor)
                * self.prediction_factor)
     # make sure bid is valid
     if bid < 0:
-      print(f"Warning: bid is negative: {bid}")
+      # print("-"*30)
+      # print(f"Warning: bid is negative: {bid}")
+      # print(f"{self.min_value_for_win = }")
+      # print(f"{self.min_trump_value_for_win = }")
+      # print(f"{self.round_factor = }")
+      # print(f"{self.jester_factor = }")
+      # print(f"{self.prediction_factor = }")
+      # print(f"non trump summand: {n_non_trumps * self.min_value_for_win}")
+      # print(f"round summand: {self.round_factor * game_state.round_number}")
+      # print(f"trump summand:  {n_trumps * self.min_trump_value_for_win}")
+      # print(f"wizard summand: {n_wizards}")
+      # print(f"jester summand: {n_jesters * self.jester_factor}")
+      # print("-"*30)
       bid: int = 0
     elif bid > game_state.round_number:
-      print(f"Warning: bid is too high: {bid}")
+      # print("-"*30)
+      # print(f"Warning: bid is too high: {bid}")
+      # print(f"{self.min_value_for_win = }")
+      # print(f"{self.min_trump_value_for_win = }")
+      # print(f"{self.round_factor = }")
+      # print(f"{self.jester_factor = }")
+      # print(f"{self.prediction_factor = }")
+      # print(f"non trump summand: {n_non_trumps * self.min_value_for_win}")
+      # print(f"round summand: {self.round_factor * game_state.round_number}")
+      # print(f"trump summand:  {n_trumps * self.min_trump_value_for_win}")
+      # print(f"wizard summand: {n_wizards}")
+      # print(f"jester summand: {n_jesters * self.jester_factor}")
+      # print("-"*30)
       bid: int = game_state.round_number
     return bid
 
@@ -190,7 +231,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     --------
         Wizard_Card: The card to play.
     """
-    hand: list[Wizard_Card] = game_state.players_hands[game_state.current_player]
+    hand: list[Wizard_Card] = game_state.players_hands[game_state.trick_active_player]
     # count the number of cards of each color
     color_counts: dict[int, int] = {}
     for card in hand:
@@ -211,23 +252,24 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
       # player still needs to win tricks
       if winning_actions:
         # play the card with lowest value that still wins
-        return min(winning_actions, key=card_values.get)
+        action: Wizard_Card = min(winning_actions, key=winning_actions.get)
       else:
         # play the card with lowest value
-        return min(valid_actions, key=card_values.get)
+        action: Wizard_Card = valid_actions[card_values.index(min(card_values))]
     else:
       # player does not need to win tricks anymore
       if loosing_actions:
         # play the card with highest value that still loses
-        return max(loosing_actions, key=card_values.get)
+        action: Wizard_Card = max(loosing_actions, key=loosing_actions.get)
       else:
         # play the card with lowest value
-        return min(valid_actions, key=card_values.get)
+        action: Wizard_Card = valid_actions[card_values.index(min(card_values))]
+    return action
 
   def _get_winning_actions(self,
       valid_actions: list[Wizard_Card],
       card_values: list[float],
-      game_state: Game_State):
+      game_state: Game_State) -> tuple[dict[Wizard_Card, float], dict[Wizard_Card, float]]:
     """
     determine which actions are winning and which are loosing
 
@@ -245,8 +287,8 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     if game_state.cards_to_be_played == game_state.get_state_dict:
       # all actions win.
       return list(), valid_actions
-    loosing_actions = dict()
-    winning_actions = dict()
+    loosing_actions: dict[Wizard_Card, float] = dict()
+    winning_actions: dict[Wizard_Card, float] = dict()
     for action, value in zip(valid_actions, card_values):
       # determine whether an action is winning or not
       _, winning_card, _ = update_winning_card(
@@ -258,9 +300,9 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
           trump_color=game_state.trump_color)
       # save action and card value in corresponding dict
       if winning_card != action:
-        loosing_actions[action] = value
+        loosing_actions[action]: float = value
       else:
-        winning_actions[action] = value
+        winning_actions[action]: float = value
     return loosing_actions, winning_actions
 
 
@@ -271,7 +313,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
   def mutate(self, mutation_rate: float = 0.1) -> None:
     """
     Mutate the agent's parameters.
-    Mutations are done by adding a random value between -1 and 1 to the parameter.
+    Mutations are done by multiplying the parameter with a random value between 0.9 and 1.1.
 
     inputs:
     -------
@@ -280,7 +322,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     new_parameters: dict[str, float] = {}
     for param_name, value in self.__dict__.items():
       if random.random() < mutation_rate:
-        new_parameters[param_name] = value + random.uniform(-1, 1)
+        new_parameters[param_name] = value * random.uniform(0.9, 1.1)
       else:
         new_parameters[param_name] = value
     self.__dict__ = new_parameters
@@ -305,4 +347,6 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
       distance: float = other_params[param_name] - value
       random_factor: float = random.random() * (1 + 2 * combination_range * distance) - combination_range * distance
       new_params[param_name]: float = value + random_factor * distance
+      if abs(new_params[param_name]) > 1e3:
+        print(f"Warning: {param_name} is is too big after crossover: {new_params[param_name]}")
     return Genetic_Wizard_Player(**new_params)

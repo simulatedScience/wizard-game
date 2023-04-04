@@ -21,8 +21,8 @@ from .genetic_rule_ai import Genetic_Rule_Ai
 ai_classes = [
     Uniform_Random_Ai,
     Smart_Random_Ai,
-    Simple_Rule_Ai
-    # Genetic_Rule_Ai
+    Simple_Rule_Ai,
+    Genetic_Rule_Ai
 ]
 ai_classes = {ai_class.name: ai_class() for ai_class in ai_classes}
 
