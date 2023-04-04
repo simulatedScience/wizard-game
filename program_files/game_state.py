@@ -1,7 +1,7 @@
 import numpy as np
 
 from program_files.wizard_card import Wizard_Card
-from program_files.scoring_functions import update_winning_card, score_round
+from program_files.scoring_functions import update_winning_card, score_round, score_trick
 
 
 class Game_State():
@@ -124,6 +124,9 @@ class Game_State():
     """
     score the last played trick. This method is automatically executed after the last action of a trick.
     """
+    # assert self.trick_winner_index == score_trick(
+    #     played_cards=self.public_card_states,
+    #     trump=self.trump_color)
     # assign one won trick to winning player
     self.players_won_tricks[self.trick_winner_index] += 1
     if self.verbosity >= 1:

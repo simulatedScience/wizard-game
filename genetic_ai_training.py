@@ -7,6 +7,7 @@ import time
 import multiprocessing as mp
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from program_files.wizard_ais.genetic_rule_ai import Genetic_Wizard_Player
 from auto_play_genetics import Genetic_Auto_Play
@@ -200,7 +201,8 @@ def evolve_population(
   best_players: list[Genetic_Wizard_Player] = [player for _, player in sorted_population][:len(population)//2]
   # create new population
   new_population: list[Genetic_Wizard_Player] = best_players
-  for i in range(len(population)):
+  i = 0
+  while len(new_population) < len(population):
     # select parents
     parent_1: Genetic_Wizard_Player = best_players[i]
     parent_2: Genetic_Wizard_Player = best_players[np.random.randint(0, len(best_players))]
@@ -208,7 +210,24 @@ def evolve_population(
     child: Genetic_Wizard_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
     child.mutate()
     new_population.append(child)
+    i = (i + 1) % len(best_players)
+  assert len(new_population) == len(population)
   return new_population, sorted_population[:track_n_best_players]
+
+
+def plot_best_players(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]):
+  """
+  Plot the best players of each generation in four plots:
+    - evolution of scores
+    - evolution of trump choice parameters
+    - evolution of trick prediction parameters
+    - evolution of trick playing parameters
+
+  inputs:
+  -------
+      best_players_evolution (list[list[tuple[float, Genetic_Wizard_Player]]]): list of best players for each generation. Each sublist should contain the same number of pairs (score, player). The player object stores all relevant parameters.
+  """
+  
 
 
 if __name__ == "__main__":
@@ -216,7 +235,7 @@ if __name__ == "__main__":
   best_parameters, best_player_evolution = train_genetic_ai(
       population_size = 30,
       n_generations = 100,
-      n_games_per_generation = 50,
+      n_games_per_generation = 30,
       n_repetitions_per_game = 3,
       crossover_range = 0,
   )

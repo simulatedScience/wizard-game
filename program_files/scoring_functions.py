@@ -24,29 +24,34 @@ def update_winning_card(
       winning_card (Wizard_Card) - previously best card in this trick. `None` if no card was played yet.
       serving_color (int) - color index that needs to be served.
       trump_color (int) - color index of the trump card. ´None` if there is no trump.
+
+  returns:
+  --------
+      (int) - winner index: index of the player who played the winning card.
+      (Wizard_Card) - winning card: best card in this trick.
+      (int) - serving color: color index that needs to be served.
   """
   # first played card is always the best so far
   if winning_card is None:
     winner_index = player_index
     winning_card = new_card
-    serving_color = new_card.color
-    # print("Rule 1: first card")
+    if new_card.color != -1:
+      serving_color = new_card.color
+  elif new_card.value == 0: # jester was played after first card
+    return winner_index, winning_card, serving_color
   # first card other than jester determines serving color
   elif winning_card.value == 0 and new_card.color != -1:
     winner_index = player_index
     winning_card = new_card
     serving_color = new_card.color
-    # print("Rule 2: Jester")
   # check if new_card is wizard -> wins if winning_card is not a wizard
   elif new_card.value == 14 and winning_card.value < 14:
     if winning_card.value == 0:
       serving_color = new_card.color
     winner_index = player_index
     winning_card = new_card
-    # print("Rule 3: Wizard")
-  # check jester
-  # if new_card.value == 0:
-  #     continue
+  elif new_card.value == 14: # wizard was played but doesn't win
+    return winner_index, winning_card, serving_color
   # trump card wins over all non-trump cards
   elif new_card.color == trump_color \
           and winning_card.color != trump_color \

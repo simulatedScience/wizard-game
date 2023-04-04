@@ -471,7 +471,7 @@ class Menu_Gui():
 
     round_sleep_label = tk.Label(
         self.sleep_time_frame,
-        text="time delay between round (in s)s")
+        text="time delay between round (in s)")
     self.add_label_style(round_sleep_label)
     round_sleep_label.grid(
         row=1,

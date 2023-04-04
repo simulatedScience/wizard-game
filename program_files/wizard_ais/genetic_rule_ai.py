@@ -13,17 +13,30 @@ class Genetic_Rule_Ai():
   name = "genetic rule ai"
   def __init__(self):
     self.player = Genetic_Wizard_Player(
-      color_sum_weight = -0.3211434016721016,
-      color_number_weight = 0.2567452912923557,
-      min_value_for_win = 8.117944297026984,
-      min_trump_value_for_win = 8.629723069341596,
-      round_factor = -0.20787805774242502,
-      jester_factor = 0.22664553694594283,
-      prediction_factor = 0.4194686380357965,
-      trump_value_increase = 8.082702696052182,
-      wizard_value = 22.964320913283263,
-      n_cards_factor = -0.7932837514707028,
-      remaining_cards_factor = -0.7763639761952872,
+      # 10 gens 10 players training
+      # color_sum_weight = -0.3211434016721016,
+      # color_number_weight = 0.2567452912923557,
+      # min_value_for_win = 8.117944297026984,
+      # min_trump_value_for_win = 8.629723069341596,
+      # round_factor = -0.20787805774242502,
+      # jester_factor = 0.22664553694594283,
+      # prediction_factor = 0.4194686380357965,
+      # trump_value_increase = 8.082702696052182,
+      # wizard_value = 22.964320913283263,
+      # n_cards_factor = -0.7932837514707028,
+      # remaining_cards_factor = -0.7763639761952872,
+      # 100 gens 30 players training
+      color_sum_weight = -0.07677145288691843,
+      color_number_weight = -0.0346826629073975,
+      min_value_for_win = 8.342220623106266,
+      min_trump_value_for_win = 6.88015278102808,
+      round_factor = -0.1513184565810613,
+      jester_factor = 0.16686374143613597,
+      prediction_factor = 0.8940312570061809,
+      trump_value_increase = 6.121871408495686,
+      wizard_value = 28.358304542696533,
+      n_cards_factor = -0.9064549865669419,
+      remaining_cards_factor = -1.4374978054022844,
     )
     self.get_prediction = self.player.get_prediction
     self.get_trump_color_choice = self.player.get_trump_color_choice

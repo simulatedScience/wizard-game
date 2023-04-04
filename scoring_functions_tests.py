@@ -128,12 +128,51 @@ def test_other_tricks():
   assert score_trick(played_cards, trump=2) == 4
   assert score_trick(played_cards, trump=3) == 2
   assert score_trick(played_cards, trump=-1) == 2
+  
+  # test round with some jesters and other cards
+  played_cards: list[Wizard_Card] = [
+    Wizard_Card(48), # blue 3
+    Wizard_Card(58), # blue 13
+    Wizard_Card(0), # red jester
+  ]
+  assert score_trick(played_cards, trump=0) == 1
+  assert score_trick(played_cards, trump=1) == 1
+  assert score_trick(played_cards, trump=2) == 1
+  assert score_trick(played_cards, trump=3) == 1
+  assert score_trick(played_cards, trump=-1) == 1
   # print(f"{score_trick(played_cards, trump=0) = }")
+
+
+def test_update_winning_card():
+  played_cards: list[Wizard_Card] = [
+    Wizard_Card(48), # blue 3
+    Wizard_Card(58), # blue 13
+    Wizard_Card(0), # red jester
+  ]
+  winners: list[int] = [0, 1, 1]
+  for trump in range(-1, 4):
+    _test_update_winning_card_trick(played_cards, winners, trump)
+
+def _test_update_winning_card_trick(played_cards: list[Wizard_Card], winners: list[int], trump_color: int):
+  last_winner: int = None
+  winning_card: Wizard_Card = None
+  serving_color: int = None
+  for i, (winner, card) in enumerate(zip(winners, played_cards)):
+    last_winner, winning_card, serving_color = update_winning_card(
+        player_index=i,
+        new_card=card,
+        winner_index=last_winner,
+        winning_card=winning_card,
+        serving_color=serving_color,
+        trump_color=trump_color,
+        )
+    assert last_winner == winner
 
 
 def all_tests():
   test_wizard_tricks()
   test_other_tricks()
+  test_update_winning_card()
 
 if __name__ == "__main__":
   all_tests()
