@@ -235,7 +235,7 @@ def _create_child(
   return child
 
 
-def plot_best_players(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]):
+def plot_best_players_avg(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]) -> None:
   """
   Plot the best players of each generation in four plots:
     - evolution of scores
@@ -247,20 +247,151 @@ def plot_best_players(best_players_evolution: list[list[tuple[float, Genetic_Wiz
   -------
       best_players_evolution (list[list[tuple[float, Genetic_Wizard_Player]]]): list of best players for each generation. Each sublist should contain the same number of pairs (score, player). The player object stores all relevant parameters.
   """
-  
+  n_generations = len(best_players_evolution)
+  n_players = len(best_players_evolution[0])
+  sample_player = best_players_evolution[0][0][1]
+  parameters: dict[str, np.ndarray] = {key: np.zeros(n_generations) for key in sample_player.__dict__.keys()}
+  parameters["scores"] = np.zeros(n_generations)
+  trump_params_to_plot = ["color_sum_weight", "color_number_weight"]
+  trick_prediction_params_to_plot = [
+    "min_value_for_win",
+      "min_trump_value_for_win",
+      "round_factor",
+      "jester_factor",
+      "prediction_factor"
+  ]
+  trick_playing_params_to_plot = [
+      "trump_value_increase",
+      "wizard_value",
+      "n_cards_factor",
+      "remaining_cards_factor"
+  ]
+
+  for i, generation in enumerate(best_players_evolution):
+    for player_score, player in generation:
+      parameters["scores"][i] += player_score
+      for key in player.__dict__.keys():
+        parameters[key][i] += player.__dict__[key]
+    
+  for key in parameters.keys():
+    parameters[key] /= n_players
+
+  fig, axes = plt.subplots(2, 2, figsize=(10, 10))
+
+  axes[0, 0].plot(parameters["scores"])
+  axes[0, 0].set_title('Score Evolution')
+  axes[0, 0].set_ylabel('Score')
+
+  for param in trump_params_to_plot:
+    axes[0, 1].plot(parameters[param], label=param)
+  axes[0, 1].set_title('Trump Choice Parameter Evolution')
+  axes[0, 1].set_ylabel('Parameter Value')
+
+  for param in trick_prediction_params_to_plot:
+    axes[1, 0].plot(parameters[param], label=param)
+  axes[1, 0].set_title('Trick Prediction Parameter Evolution')
+  axes[1, 0].set_ylabel('Parameter Value')
+
+  for param in trick_playing_params_to_plot:
+    axes[1, 1].plot(parameters[param], label=param)
+  axes[1, 1].set_title('Trick Playing Parameter Evolution')
+  axes[1, 1].set_ylabel('Parameter Value')
+
+  for x in range(2):
+    for y in range(2):
+      axes[x, y].set_xlabel('Generation')
+      axes[x, y].legend()
+      axes[x, y].grid(color="#dddddd")
+  plt.show()
+
+def plot_best_players_individual(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]) -> None:
+    """
+    Plot the best players of each generation in four separate plots:
+      - evolution of scores
+      - evolution of trump choice parameters
+      - evolution of trick prediction parameters
+      - evolution of trick playing parameters
+
+    inputs:
+    -------
+        best_players_evolution (list[list[tuple[float, Genetic_Wizard_Player]]]): list of best players for each generation. Each sublist should contain the same number of pairs (score, player). The player object stores all relevant parameters.
+    """
+    # Define the parameters to plot for each player
+    trump_params_to_plot = ["color_sum_weight", "color_number_weight"]
+    trick_prediction_params_to_plot = [
+      "min_value_for_win",
+        "min_trump_value_for_win",
+        "round_factor",
+        "jester_factor",
+        "prediction_factor"
+    ]
+    trick_playing_params_to_plot = [
+        "trump_value_increase",
+        "wizard_value",
+        "n_cards_factor",
+        "remaining_cards_factor"
+    ]
+    # Set up the plot
+    fig, axes = plt.subplots(nrows=2, ncols=2)
+    # Plot the evolution of the scores
+    n_players: int = len(best_players_evolution[0])
+    n_generations: int = len(best_players_evolution)
+    for player_index in range(n_players):
+      # plot score evolution
+      scores: list[float] = [0] * n_generations
+      for gen_index, generation in enumerate(best_players_evolution):
+        scores[gen_index] = generation[player_index][0]
+      axes[0, 0].plot(scores, label=f"P{player_index}")
+      # plot trump choice parameters evolution
+      trump_params: list[list[float]] = [[0] * n_generations for _ in range(len(trump_params_to_plot))]
+      for param_index, param_name in enumerate(trump_params_to_plot):
+        for gen_index, generation in enumerate(best_players_evolution):
+          trump_params[param_index][gen_index] = generation[player_index][1].__dict__[param_name]
+        axes[0, 1].plot(trump_params[0], label=f"{param_name} P{player_index}", alpha=0.5)
+      # plot trick prediction parameters evolution
+      trick_prediction_params: list[list[float]] = [[0] * n_generations for _ in range(len(trick_prediction_params_to_plot))]
+      for param_index, param_name in enumerate(trick_prediction_params_to_plot):
+        for gen_index, generation in enumerate(best_players_evolution):
+          trick_prediction_params[param_index][gen_index] = generation[player_index][1].__dict__[param_name]
+        axes[1, 0].plot(trick_prediction_params[0], label=f"{param_name} P{player_index}", alpha=0.5)
+      # plot trick playing parameters evolution
+      trick_playing_params: list[list[float]] = [[0] * n_generations for _ in range(len(trick_playing_params_to_plot))]
+      for param_index, param_name in enumerate(trick_playing_params_to_plot):
+        for gen_index, generation in enumerate(best_players_evolution):
+          trick_playing_params[param_index][gen_index] = generation[player_index][1].__dict__[param_name]
+        axes[1, 1].plot(trick_playing_params[0], label=f"{param_name} P{player_index}", alpha=0.5)
+    # add labels and legends
+    axes[0, 0].set_title("Evolution of Scores")
+    axes[0, 1].set_title("Evolution of Trump Choice Parameters")
+    axes[1, 0].set_title("Evolution of Trick Prediction Parameters")
+    axes[1, 1].set_title("Evolution of Trick Playing Parameters")
+    for x in range(2):
+      for y in range(2):
+        axes[x, y].set_xlabel("Generation")
+        axes[x, y].set_ylabel("Parameter Value")
+        axes[x, y].legend()
+    axes[0, 0].set_ylabel("Score")
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
-  np.random.seed(5)
-  best_parameters, best_player_evolution = train_genetic_ai(
-      population_size = 150,
-      n_generations = 300,
-      n_games_per_generation = 300,
-      n_repetitions_per_game = 1,
-      crossover_range = 0,
-  )
-  print("\nBest parameters:\n  " + "\n  ".join([f"{key} = {value}," for key, value in best_parameters.items()]))
-
   import pickle
-  with open("best_player_evolution.pickle", "wb") as file:
-    pickle.dump(best_player_evolution, file)
+  # np.random.seed(5)
+  # best_parameters, best_player_evolution = train_genetic_ai(
+  #     population_size = 300,
+  #     n_generations = 50,
+  #     n_games_per_generation = 400,
+  #     n_repetitions_per_game = 5,
+  #     crossover_range = 0,
+  # )
+  # print("\nBest parameters:\n  " + "\n  ".join([f"{key} = {value}," for key, value in best_parameters.items()]))
+
+  # with open("best_player_evolution.pickle", "wb") as file:
+  #   pickle.dump(best_player_evolution, file)
+  # print(f"finished saving best_player_evolution.")
+
+  with open("best_player_evolution.pickle", "rb") as file:
+    best_player_evolution = pickle.load(file)
+  plot_best_players_avg(best_player_evolution)
+  # plot_best_players_individual(best_player_evolution)
