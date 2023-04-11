@@ -141,9 +141,6 @@ class Simple_Rule_Ai(Wizard_Base_Ai):
         (dict): dictionary of loosing actions and their values
         (dict): dictionary of winning actions and their values
     """
-    if game_state.cards_to_be_played == game_state.get_state_dict:
-      # all actions win.
-      return list(), valid_actions
     loosing_actions = dict()
     winning_actions = dict()
     for action, value in zip(valid_actions, card_values):

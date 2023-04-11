@@ -33,7 +33,7 @@ class Game_State():
     self.trick_active_player = self.round_starting_player
     self.trick_winner_index: int = 0
 
-    self.cards_to_be_played: int = n_players
+    self.n_cards_to_be_played: int = n_players
     self.winning_card: Wizard_Card = None
     self.serving_color: int = None
 
@@ -81,8 +81,8 @@ class Game_State():
     # increment active player index
     self.trick_active_player = (self.trick_active_player + 1) % self.n_players
     # increment cards left to be played in the current trick
-    if self.cards_to_be_played > 1:  # last card was played
-      self.cards_to_be_played -= 1
+    if self.n_cards_to_be_played > 1:  # last card was played
+      self.n_cards_to_be_played -= 1
       return_val = 0
     else:
       self._end_trick()
@@ -115,7 +115,7 @@ class Game_State():
     # reset variables for next trick
     self.trick_winner_index = 0
 
-    self.cards_to_be_played: int = self.n_players
+    self.n_cards_to_be_played: int = self.n_players
     self.winning_card: Wizard_Card = None
     self.serving_color: int = None
 
@@ -200,9 +200,9 @@ class Game_State():
     """returns the hand of the active player
 
     Returns:
-        list: _description_
+        list: list of cards in the active player's hand
     """
-    self.players_hands
+    self.players_hands[self.trick_active_player]
 
   def get_state_dict(self) -> dict:
     state_dict = {
@@ -217,7 +217,7 @@ class Game_State():
         "trick_active_player": self.trick_active_player,
         "trick_winner_index": self.trick_winner_index,
 
-        "cards_to_be_played": self.cards_to_be_played,
+        "cards_to_be_played": self.n_cards_to_be_played,
         "winning_card": self.winning_card,
         "serving_color": self.serving_color,
 

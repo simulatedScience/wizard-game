@@ -5,6 +5,7 @@ Author: Sebastian Jost
 """
 import time
 import multiprocessing as mp
+from itertools import repeat
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -151,7 +152,8 @@ def evaluate_population(
   """
   individual_scores: list[list[float]] = [[] for _ in range(len(population))]
   individual_indices: list[int] = list(range(len(population)))
-  process_pool: mp.Pool = mp.Pool(mp.cpu_count() * 2)
+  if n_repetitions_per_game > 5:
+    process_pool: mp.Pool = mp.Pool(mp.cpu_count() * 2)
   for n_players in range(3, 7):
     for _ in range(n_games_per_generation):
       player_indices: np.ndarray[int] = np.random.choice(individual_indices, size=n_players, replace=False)
@@ -163,14 +165,18 @@ def evaluate_population(
         shuffle_players=True,
         ai_instances=players,
       )
-      average_scores_evolution, _ = auto_game.auto_play_multi_threaded(
-          n_games = n_repetitions_per_game,
-          process_pool = process_pool,
-      )
+      if n_repetitions_per_game > 5:
+        average_scores_evolution, _ = auto_game.auto_play_multi_threaded(
+            n_games = n_repetitions_per_game,
+            process_pool = process_pool,
+        )
+      else:
+        average_scores_evolution, _ = auto_game.auto_play_single_threaded(n_games = n_repetitions_per_game)
       for i, player_index in enumerate(player_indices):
         individual_scores[player_index].append(average_scores_evolution[-1][i])
-  process_pool.close()
-  process_pool.join()
+  if n_repetitions_per_game > 5:
+    process_pool.close()
+    process_pool.join()
   for i, player in enumerate(population):
     individual_scores[i] = np.mean(individual_scores[i])
   return individual_scores
@@ -200,19 +206,33 @@ def evolve_population(
   sorted_population: list[tuple[float, Genetic_Wizard_Player]] = sorted(zip(population_scores, population), reverse=True, key=lambda x: x[0])
   best_players: list[Genetic_Wizard_Player] = [player for _, player in sorted_population][:len(population)//2]
   # create new population
-  new_population: list[Genetic_Wizard_Player] = best_players
-  i = 0
-  while len(new_population) < len(population):
-    # select parents
-    parent_1: Genetic_Wizard_Player = best_players[i]
-    parent_2: Genetic_Wizard_Player = best_players[np.random.randint(0, len(best_players))]
-    # create child
-    child: Genetic_Wizard_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
-    child.mutate()
-    new_population.append(child)
-    i = (i + 1) % len(best_players)
-  assert len(new_population) == len(population)
+  n_children: int = len(population) - len(best_players)
+  process_pool: mp.Pool = mp.Pool(mp.cpu_count() * 2)
+  new_children: list[Genetic_Wizard_Player] = process_pool.starmap(_create_child, repeat((best_players, crossover_range), n_children))
+  new_population: list[Genetic_Wizard_Player] = best_players + new_children
+  # shuffle new population in-place
+  np.random.shuffle(new_population)
   return new_population, sorted_population[:track_n_best_players]
+
+def _create_child(
+    parent_population: list[Genetic_Wizard_Player],
+    crossover_range: float,
+    ):
+  """
+  Create a child from two random parents sampled from `parent_population`. Then apply mutations to the newly created child
+
+  Args:
+      parent_population (list[Genetic_Wizard_Player]): list of potential parents
+      crossover_range (float): how far outside the distance between the two parents' values the child's value can be
+
+  Returns:
+      Genetic_Wizard_Player: the child
+  """
+  parent_1, parent_2 = np.random.choice(parent_population, size=2, replace=False)
+  # create child
+  child: Genetic_Wizard_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
+  child.mutate()
+  return child
 
 
 def plot_best_players(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]):
@@ -233,10 +253,14 @@ def plot_best_players(best_players_evolution: list[list[tuple[float, Genetic_Wiz
 if __name__ == "__main__":
   np.random.seed(5)
   best_parameters, best_player_evolution = train_genetic_ai(
-      population_size = 30,
-      n_generations = 100,
-      n_games_per_generation = 30,
-      n_repetitions_per_game = 3,
+      population_size = 150,
+      n_generations = 300,
+      n_games_per_generation = 300,
+      n_repetitions_per_game = 1,
       crossover_range = 0,
   )
   print("\nBest parameters:\n  " + "\n  ".join([f"{key} = {value}," for key, value in best_parameters.items()]))
+
+  import pickle
+  with open("best_player_evolution.pickle", "wb") as file:
+    pickle.dump(best_player_evolution, file)

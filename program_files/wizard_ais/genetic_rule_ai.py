@@ -26,17 +26,28 @@ class Genetic_Rule_Ai():
       # n_cards_factor = -0.7932837514707028,
       # remaining_cards_factor = -0.7763639761952872,
       # 100 gens 30 players training
-      color_sum_weight = -0.07677145288691843,
-      color_number_weight = -0.0346826629073975,
-      min_value_for_win = 8.342220623106266,
-      min_trump_value_for_win = 6.88015278102808,
-      round_factor = -0.1513184565810613,
-      jester_factor = 0.16686374143613597,
-      prediction_factor = 0.8940312570061809,
-      trump_value_increase = 6.121871408495686,
-      wizard_value = 28.358304542696533,
-      n_cards_factor = -0.9064549865669419,
-      remaining_cards_factor = -1.4374978054022844,
+      # color_sum_weight = -0.07677145288691843,
+      # color_number_weight = -0.0346826629073975,
+      # min_value_for_win = 8.342220623106266,
+      # min_trump_value_for_win = 6.88015278102808,
+      # round_factor = -0.1513184565810613,
+      # jester_factor = 0.16686374143613597,
+      # prediction_factor = 0.8940312570061809,
+      # trump_value_increase = 6.121871408495686,
+      # wizard_value = 28.358304542696533,
+      # n_cards_factor = -0.9064549865669419,
+      # remaining_cards_factor = -1.4374978054022844,
+      # 300 gens, 150 players training
+      color_sum_weight = 0.01746404300746775,
+      color_number_weight = -0.2104898616939936,
+      min_value_for_win = 7.312661896674464,
+      min_trump_value_for_win = 7.503686000318684,
+      round_factor = -0.10709470379417774,
+      jester_factor = -0.11372619078353789,
+      prediction_factor = 0.6519285674963982,
+      wizard_value = 24.17913209609162,
+      n_cards_factor = -1.068106127603159,
+      remaining_cards_factor = -0.7083943818724096,
     )
     self.get_prediction = self.player.get_prediction
     self.get_trump_color_choice = self.player.get_trump_color_choice
@@ -257,7 +268,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
           + self.n_cards_factor * color_counts[card.color]
           + self.trump_value_increase * (card.color == game_state.trump_color)
           + self.wizard_value * (card.value == 14)
-          + self.remaining_cards_factor * game_state.cards_to_be_played)
+          + self.remaining_cards_factor * game_state.n_cards_to_be_played)
     loosing_actions, winning_actions = self._get_winning_actions(valid_actions, card_values, game_state)
     
     # choose the action
@@ -297,9 +308,6 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
         (dict): dictionary of loosing actions and their values
         (dict): dictionary of winning actions and their values
     """
-    if game_state.cards_to_be_played == game_state.get_state_dict:
-      # all actions win.
-      return list(), valid_actions
     loosing_actions: dict[Wizard_Card, float] = dict()
     winning_actions: dict[Wizard_Card, float] = dict()
     for action, value in zip(valid_actions, card_values):

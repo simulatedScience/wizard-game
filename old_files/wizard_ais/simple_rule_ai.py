@@ -126,7 +126,7 @@ class Simple_Rule_Ai():
                            valid_actions: list,
                            card_values: list,
                            game_state: Game_State):
-    if game_state.cards_to_be_played == game_state.get_state_dict:
+    if game_state.n_cards_to_be_played == game_state.get_state_dict:
       # all actions win.
       return list(), valid_actions
     loosing_actions = dict()

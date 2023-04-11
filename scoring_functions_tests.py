@@ -153,6 +153,7 @@ def test_update_winning_card():
   for trump in range(-1, 4):
     _test_update_winning_card_trick(played_cards, winners, trump)
 
+
 def _test_update_winning_card_trick(played_cards: list[Wizard_Card], winners: list[int], trump_color: int):
   last_winner: int = None
   winning_card: Wizard_Card = None
