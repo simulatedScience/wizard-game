@@ -3,18 +3,15 @@ This module is responsible for training the genetic rule AI by implementing a ge
 
 Author: Sebastian Jost
 """
-import time
-import multiprocessing as mp
-from itertools import repeat
+import os
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from program_files.wizard_ais.genetic_rule_ai import Genetic_Wizard_Player
-from auto_play_genetics import Genetic_Auto_Play
+from program_files.wizard_ais.genetic_rule_ai import Genetic_Rule_Player
 
 def test_genetic_methods():
-  player_1 = Genetic_Wizard_Player(
+  player_1 = Genetic_Rule_Player(
       # trump color choice parameters
       color_sum_weight = 0,
       color_number_weight = 1,
@@ -30,7 +27,7 @@ def test_genetic_methods():
       n_cards_factor = 0,
       remaining_cards_factor = 0,
   )
-  player_2 = Genetic_Wizard_Player(
+  player_2 = Genetic_Rule_Player(
       # trump color choice parameters
       color_sum_weight = 1,
       color_number_weight = 0,
@@ -46,12 +43,12 @@ def test_genetic_methods():
       n_cards_factor = -1,
       remaining_cards_factor = -1,
   )
-  child: Genetic_Wizard_Player = player_1.crossover(player_2)
+  child: Genetic_Rule_Player = player_1.crossover(player_2)
   print(f"{child}")
   child.mutate()
   print(f"{child}")
 
-def init_population(population_size: int) -> list[Genetic_Wizard_Player]:
+def init_population(population_size: int) -> list[Genetic_Rule_Player]:
   """
   Initialize the population for the genetic algorithm using Genetic_Wizard_Player objects with random parameters.
   Players play according to parametrized rules. Those parameters are optimzied by the genetic algorithm.
@@ -64,7 +61,7 @@ def init_population(population_size: int) -> list[Genetic_Wizard_Player]:
   --------
       list[Genetic_Wizard_Player]: list of players
   """
-  population: list[Genetic_Wizard_Player] = []
+  population: list[Genetic_Rule_Player] = []
   for _ in range(population_size):
     initial_parameters = {
         # trump color choice parameters
@@ -82,10 +79,31 @@ def init_population(population_size: int) -> list[Genetic_Wizard_Player]:
         "n_cards_factor": np.random.uniform(-2, 0),
         "remaining_cards_factor": np.random.uniform(-2, 0),
     }
-    population.append(Genetic_Wizard_Player(**initial_parameters))
+    population.append(Genetic_Rule_Player(**initial_parameters))
   return population
 
-def plot_best_players_avg(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]) -> None:
+def load_genetic_rule_population(path: str) -> list[Genetic_Rule_Player]:
+  """
+  Load a population from a pickle file.
+
+  inputs:
+  -------
+      path (str): path to the pickle file
+
+  returns:
+  --------
+      list[Genetic_NN_Player]: list of players
+  """
+  population: list[Genetic_Rule_Player] = []
+  for player_name in os.listdir(path):
+    player_path: str = os.path.join(path, player_name)
+    player: Genetic_Rule_Player = Genetic_Rule_Player.load(player_path)
+    population.append(player)
+  print(f"Loaded {len(population)} players from {path.strip(os.curdir)}")
+  return population
+
+
+def plot_best_players_avg(best_players_evolution: list[list[tuple[float, Genetic_Rule_Player]]]) -> None:
   """
   Plot the best players of each generation in four plots:
     - evolution of scores
@@ -154,7 +172,7 @@ def plot_best_players_avg(best_players_evolution: list[list[tuple[float, Genetic
       axes[x, y].grid(color="#dddddd")
   plt.show()
 
-def plot_best_players_individual(best_players_evolution: list[list[tuple[float, Genetic_Wizard_Player]]]) -> None:
+def plot_best_players_individual(best_players_evolution: list[list[tuple[float, Genetic_Rule_Player]]]) -> None:
     """
     Plot the best players of each generation in four separate plots:
       - evolution of scores

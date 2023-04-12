@@ -3,7 +3,9 @@ This file contains the functions to train neural networks using a genetic algori
 
 Author: Sebastian Jost
 """
+import os
 import pickle
+from tkinter import Tk, filedialog
 
 import matplotlib.pyplot as plt
 
@@ -37,8 +39,29 @@ def init_population(
     trick_action_nn_layers) for _ in range(population_size)]
   return population
 
+def load_genetic_nn_population(path: str) -> list[Genetic_NN_Player]:
+  """
+  Load a population from a pickle file.
+
+  inputs:
+  -------
+      path (str): path to the pickle file
+
+  returns:
+  --------
+      list[Genetic_NN_Player]: list of players
+  """
+  population: list[Genetic_NN_Player] = []
+  for player_name in os.listdir(path):
+    player_path: str = os.path.join(path, player_name)
+    player: Genetic_NN_Player = Genetic_NN_Player.load(player_path)
+    population.append(player)
+  print(f"Loaded {len(population)} players from {path.strip(os.curdir)}")
+  return population
+
 def main(
     population_size: int = 100,
+    load_population: bool = False,
     n_generations: int = 50,
     max_time_s: int = 60*30, # 30 minutes
     n_games_per_generation: int = 100,
@@ -67,7 +90,19 @@ def main(
       best_parameters (list[float]): list of best parameters
       best_player_evolution (list[float]): list of best players
   """
-  population: list[Genetic_NN_Player] = init_population(population_size)
+  if not load_population:
+    population: list[Genetic_NN_Player] = init_population(population_size)
+  else: # open filedialog to choose population folder
+    root = Tk()
+    root.withdraw()
+    path: str = filedialog.askdirectory(
+        initialdir=".",
+        title="Choose folder of pre-trained population")
+    if path:
+      population: list[Genetic_NN_Player] = load_genetic_nn_population(path)
+    else:
+      raise FileNotFoundError("No valid path chosen.")
+  # train population
   best_parameters, best_player_evolution = train_genetic_ai(
     population,
     n_generations,
@@ -122,17 +157,25 @@ if __name__ == "__main__":
   #     mutation_range = 0.01,
   #     track_n_best_players = 2
   # )
-  best_parameters, best_player_evolution = main(
-      population_size = 6,
-      n_generations = 15,
-      n_games_per_generation = 2,
-      n_repetitions_per_game = 2,
-      crossover_range = 0.01,
-      mutation_rate = 0.1,
-      mutation_range = 0.01,
-      track_n_best_players = 2
-  )
+  # best_parameters, best_player_evolution = main(
+  #     population_size = 50,
+  #     load_population = False,
+  #     n_generations = 1000,
+  #     max_time_s = 60*60,
+  #     n_games_per_generation = 40,
+  #     n_repetitions_per_game = 3,
+  #     crossover_range = 0.01,
+  #     mutation_rate = 0.1,
+  #     mutation_range = 0.01,
+  #     track_n_best_players = 3
+  # )
   with open("best_GenNN_player_evolution.pickle", "rb") as file:
     best_player_evolution = pickle.load(file)
-  save_best_networks(best_player_evolution)
+  for i, generation in enumerate(best_player_evolution):
+    if generation == 0:
+      best_player_evolution = best_player_evolution[:i]
+      with open("best_GenNN_player_evolution.pickle", "wb") as file:
+        pickle.dump(best_player_evolution, file)
+      break
+  # save_best_networks(best_player_evolution)
   plot_score_evolution(best_player_evolution)

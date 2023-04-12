@@ -5,11 +5,11 @@ from itertools import repeat
 
 import numpy as np
 
-from program_files.wizard_ais.genetic_rule_ai import Genetic_Wizard_Player
+from program_files.wizard_ais.genetic_rule_ai import Genetic_Rule_Player
 from auto_play_genetics import Genetic_Auto_Play
 
 def train_genetic_ai(
-    population: list[Genetic_Wizard_Player],
+    population: list[Genetic_Rule_Player],
     n_generations: int = 100,
     max_time_s: float = 60 * 60, # 1 hour
     n_games_per_generation: int = 100,
@@ -36,7 +36,7 @@ def train_genetic_ai(
       dict[str, float]: dictionary containing the best parameters found
       list[list[tuple[float, Genetic_Wizard_Player]]]: list of the best players of each generation and their average score
   """
-  best_player_evolution: list[list[tuple[float, Genetic_Wizard_Player]]] = [0] * n_generations
+  best_player_evolution: list[list[tuple[float, Genetic_Rule_Player]]] = [0] * n_generations
   start_time: float = time.time()
   # train population
   for generation in range(n_generations):
@@ -53,11 +53,12 @@ def train_genetic_ai(
     print(f"\rTraining AI: {generation + 1}/{n_generations} generations.  Estimated remaining time: {(time.time() - start_time) / (generation + 1) * (n_generations - generation - 1):.2f} s.", end="")
     if time.time() - start_time > max_time_s:
       print(f"\nStopping training after {generation + 1} generations.  Maximum time of {max_time_s} s exceeded.")
+      best_player_evolution = best_player_evolution[:generation + 1]
       break
   # return best parameters
   print("\nTraining complete.  Evaluating best player...", end="")
   population_scores: list[float] = evaluate_population(population, n_games_per_generation, n_repetitions_per_game)
-  best_player: Genetic_Wizard_Player = population[np.argmax(population_scores)]
+  best_player: Genetic_Rule_Player = population[np.argmax(population_scores)]
   print("\b\b\b done.")
   # save last generation
   training_name: str = time.strftime("%Y-%m-%d_%H-%M-%S") + f"_{population[0].__class__.__name__}"
@@ -68,7 +69,7 @@ def train_genetic_ai(
   return best_player.get_parameters(), best_player_evolution
 
 def evaluate_population(
-      population: list[Genetic_Wizard_Player],
+      population: list[Genetic_Rule_Player],
       n_games_per_generation: int,
       n_repetitions_per_game: int,
       ) -> list[float]:
@@ -93,7 +94,7 @@ def evaluate_population(
   for n_players in range(3, 7):
     for _ in range(n_games_per_generation):
       player_indices: np.ndarray[int] = np.random.choice(individual_indices, size=n_players, replace=False)
-      players: list[Genetic_Wizard_Player] = [population[i] for i in player_indices]
+      players: list[Genetic_Rule_Player] = [population[i] for i in player_indices]
       auto_game: Genetic_Auto_Play = Genetic_Auto_Play(
         n_players=n_players,
         limit_choices=False,
@@ -118,13 +119,13 @@ def evaluate_population(
   return individual_scores
 
 def evolve_population(
-    population: list[Genetic_Wizard_Player],
+    population: list[Genetic_Rule_Player],
     population_scores: list[float],
     crossover_range: float = 0.1,
     mutation_rate: float = 0.1,
     mutation_range: float = 0.1,
     track_n_best_players: int = 5,
-    ) -> list[Genetic_Wizard_Player]:
+    ) -> list[Genetic_Rule_Player]:
   """
   Evolve the population by selecting the best players and using them to create new players.
 
@@ -140,8 +141,8 @@ def evolve_population(
       list[Genetic_Wizard_Player]: list of players
   """
   # select best players
-  sorted_population: list[tuple[float, Genetic_Wizard_Player]] = sorted(zip(population_scores, population), reverse=True, key=lambda x: x[0])
-  best_players: list[Genetic_Wizard_Player] = [player for _, player in sorted_population][:len(population)//2]
+  sorted_population: list[tuple[float, Genetic_Rule_Player]] = sorted(zip(population_scores, population), reverse=True, key=lambda x: x[0])
+  best_players: list[Genetic_Rule_Player] = [player for _, player in sorted_population][:len(population)//2]
   # create new population
   n_children: int = len(population) - len(best_players)
   # multi threaded child creation
@@ -150,14 +151,14 @@ def evolve_population(
   # process_pool.close()
   # process_pool.join()
   # single threaded child creation
-  new_children: list[Genetic_Wizard_Player] = [_create_child(best_players, crossover_range, mutation_rate, mutation_range) for _ in range(n_children)]
-  new_population: list[Genetic_Wizard_Player] = best_players + new_children
+  new_children: list[Genetic_Rule_Player] = [_create_child(best_players, crossover_range, mutation_rate, mutation_range) for _ in range(n_children)]
+  new_population: list[Genetic_Rule_Player] = best_players + new_children
   # shuffle new population in-place
   np.random.shuffle(new_population)
   return new_population, sorted_population[:track_n_best_players]
 
 def _create_child(
-    parent_population: list[Genetic_Wizard_Player],
+    parent_population: list[Genetic_Rule_Player],
     crossover_range: float = 0.1,
     mutation_rate: float = 0.1,
     mutation_range: float = 0.1,
@@ -174,7 +175,7 @@ def _create_child(
   """
   parent_1, parent_2 = np.random.choice(parent_population, size=2, replace=False)
   # create child
-  child: Genetic_Wizard_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
+  child: Genetic_Rule_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
   child.mutate(mutation_rate=mutation_rate, mutation_range=mutation_range)
   return child
 

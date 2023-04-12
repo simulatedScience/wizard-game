@@ -12,7 +12,7 @@ from program_files.scoring_functions import update_winning_card
 class Genetic_Rule_Ai():
   name = "genetic rule ai"
   def __init__(self):
-    self.player = Genetic_Wizard_Player(
+    self.player = Genetic_Rule_Player(
       # 10 gens 10 players training
       # color_sum_weight = -0.3211434016721016,
       # color_number_weight = 0.2567452912923557,
@@ -55,7 +55,7 @@ class Genetic_Rule_Ai():
 
 
 
-class Genetic_Wizard_Player(Wizard_Base_Ai):
+class Genetic_Rule_Player(Wizard_Base_Ai):
   """
   Define a Wizard AI player that plays according to some basic rules.
   The rules have many adjustable numeric parameters to tweak the behaviour.
@@ -154,7 +154,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
       json.dump(self.get_parameters(), file)
 
   @staticmethod
-  def load(filepath: str) -> "Genetic_Wizard_Player":
+  def load(filepath: str) -> "Genetic_Rule_Player":
     """
     Load a player from a json file.
 
@@ -166,7 +166,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     """
     with open(filepath, 'rb') as f:
       parameters = json.load(f)
-    return Genetic_Wizard_Player(**parameters)
+    return Genetic_Rule_Player(**parameters)
 
   # methods for playing wizard
   def get_trump_color_choice(self, hands: list[Wizard_Card], active_player: int, game_state: Game_State) -> int:
@@ -378,7 +378,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
       new_params[param_name]: float = value + random_factor * distance
       if abs(new_params[param_name]) > 1e3:
         print(f"Warning: {param_name} is is too big after crossover: {new_params[param_name]}")
-    return Genetic_Wizard_Player(**new_params)
+    return Genetic_Rule_Player(**new_params)
 
   def get_parameters(self) -> dict[str, float]:
     """
