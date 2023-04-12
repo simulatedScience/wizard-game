@@ -40,6 +40,7 @@ def init_population(
 def main(
     population_size: int = 100,
     n_generations: int = 50,
+    max_time_s: int = 60*30, # 30 minutes
     n_games_per_generation: int = 100,
     n_repetitions_per_game: int = 1,
     crossover_range: float = 0.1,
@@ -53,9 +54,12 @@ def main(
   -------
       population_size (int): number of players in each generation
       n_generations (int): number of generations
+      max_time_s (int): maximum time in seconds for the training
       n_games_per_generation (int): number of games per generation
       n_repetitions_per_game (int): number of repetitions per game
       crossover_range (float): range of the random numbers used for crossover
+      mutation_rate (float): probability of a mutation
+      mutation_range (float): range of the random numbers used for mutation
       track_n_best_players (int): number of best players to track
 
   returns:
@@ -67,6 +71,7 @@ def main(
   best_parameters, best_player_evolution = train_genetic_ai(
     population,
     n_generations,
+    max_time_s,
     n_games_per_generation,
     n_repetitions_per_game,
     crossover_range,
@@ -118,10 +123,10 @@ if __name__ == "__main__":
   #     track_n_best_players = 2
   # )
   best_parameters, best_player_evolution = main(
-      population_size = 30,
-      n_generations = 30,
-      n_games_per_generation = 15,
-      n_repetitions_per_game = 5,
+      population_size = 6,
+      n_generations = 15,
+      n_games_per_generation = 2,
+      n_repetitions_per_game = 2,
       crossover_range = 0.01,
       mutation_rate = 0.1,
       mutation_range = 0.01,

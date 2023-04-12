@@ -1,5 +1,6 @@
 import os
 import random
+import json
 
 from program_files.wizard_card import Wizard_Card
 from program_files.game_state import Game_State
@@ -133,6 +134,39 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     self.wizard_value = wizard_value
     self.n_cards_factor = n_cards_factor
     self.remaining_cards_factor = remaining_cards_factor
+
+  def save(self, save_dir: str = None, id: int = None):
+    """
+    Save the parameters of the player using json.
+
+    Args:
+        save_dir (str, optional): Directory to save the player to. Defaults to None.
+        id (int, optional): ID of the player. Defaults to None (random ID)
+    """
+    if save_dir is None:
+      save_dir = os.path.join(os.path.dirname(__file__), 'genetic_rule_ai_players')
+    if not os.path.exists(save_dir):
+      os.makedirs(save_dir)
+    if id is None:
+      id: int = random.randint(0, int(1e9)-1)
+    save_path = os.path.join(save_dir, f'genetic_rule_ai_player_{id}.json')
+    with open(save_path, 'w') as file:
+      json.dump(self.get_parameters(), file)
+
+  @staticmethod
+  def load(filepath: str) -> "Genetic_Wizard_Player":
+    """
+    Load a player from a json file.
+
+    Args:
+        filepath (str): Path to the json file.
+
+    Returns:
+        Genetic_Rule_AI_Player: The player loaded from the file.
+    """
+    with open(filepath, 'rb') as f:
+      parameters = json.load(f)
+    return Genetic_Wizard_Player(**parameters)
 
   # methods for playing wizard
   def get_trump_color_choice(self, hands: list[Wizard_Card], active_player: int, game_state: Game_State) -> int:
@@ -354,4 +388,19 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     --------
         (dict): dictionary of the agent's parameters
     """
-    return self.__dict__
+    return {
+      # trump color choice parameters
+      "color_sum_weight": self.color_sum_weight,
+      "color_number_weight": self.color_number_weight,
+      # bids parameters
+      "min_value_for_win": self.min_value_for_win,
+      "min_trump_value_for_win": self.min_trump_value_for_win,
+      "round_factor": self.round_factor,
+      "jester_factor": self.jester_factor,
+      "prediction_factor": self.prediction_factor,
+      # trick play parameters
+      "trump_value_increase": self.trump_value_increase,
+      "wizard_value": self.wizard_value,
+      "n_cards_factor": self.n_cards_factor,
+      "remaining_cards_factor": self.remaining_cards_factor
+      }

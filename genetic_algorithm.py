@@ -1,3 +1,4 @@
+import os
 import time
 import multiprocessing as mp
 from itertools import repeat
@@ -10,6 +11,7 @@ from auto_play_genetics import Genetic_Auto_Play
 def train_genetic_ai(
     population: list[Genetic_Wizard_Player],
     n_generations: int = 100,
+    max_time_s: float = 60 * 60, # 1 hour
     n_games_per_generation: int = 100,
     n_repetitions_per_game: int = 30,
     crossover_range: float = 0.1,
@@ -49,9 +51,20 @@ def train_genetic_ai(
     best_player_evolution[generation] = best_players
     # show progress bar for training
     print(f"\rTraining AI: {generation + 1}/{n_generations} generations.  Estimated remaining time: {(time.time() - start_time) / (generation + 1) * (n_generations - generation - 1):.2f} s.", end="")
+    if time.time() - start_time > max_time_s:
+      print(f"\nStopping training after {generation + 1} generations.  Maximum time of {max_time_s} s exceeded.")
+      break
   # return best parameters
+  print("\nTraining complete.  Evaluating best player...", end="")
   population_scores: list[float] = evaluate_population(population, n_games_per_generation, n_repetitions_per_game)
   best_player: Genetic_Wizard_Player = population[np.argmax(population_scores)]
+  print("\b\b\b done.")
+  # save last generation
+  training_name: str = time.strftime("%Y-%m-%d_%H-%M-%S") + f"_{population[0].__class__.__name__}"
+  save_dir: str = os.path.join("genetic_ai_training_history", training_name)
+  os.makedirs(save_dir, exist_ok=True)
+  for i, player in enumerate(population):
+    player.save(save_dir, id=i)
   return best_player.get_parameters(), best_player_evolution
 
 def evaluate_population(

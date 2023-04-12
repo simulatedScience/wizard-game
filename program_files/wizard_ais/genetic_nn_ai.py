@@ -6,6 +6,7 @@ feature vectors are defined in `wizard_feature_vectors.py`.
 """
 import os
 import random
+import json
 
 import numpy as np
 import torch
@@ -136,7 +137,7 @@ class Genetic_NN_Player(Wizard_Base_Ai):
     if trick_action_nn_weights is not None:
       self.trick_action_nn.set_weights(trick_action_nn_weights)
 
-  def save(self, save_dir: str = None):
+  def save(self, save_dir: str = None, id: int = None) -> None:
     """
     save the neural networks weights to file
 
@@ -145,9 +146,50 @@ class Genetic_NN_Player(Wizard_Base_Ai):
     """
     if save_dir is None:
       save_dir = os.path.join("program_files", "wizard_ais", "genetic_nn_ai")
-    torch.save(self.trump_color_nn, os.path.join(save_dir, "trump_color_nn.pt"))
-    torch.save(self.prediction_nn, os.path.join(save_dir, "prediction_nn.pt"))
-    torch.save(self.trick_action_nn, os.path.join(save_dir, "trick_action_nn.pt"))
+    if id is None:
+      torch.save(self.trump_color_nn, os.path.join(save_dir, "trump_color_nn.pt"))
+      torch.save(self.prediction_nn, os.path.join(save_dir, "prediction_nn.pt"))
+      torch.save(self.trick_action_nn, os.path.join(save_dir, "trick_action_nn.pt"))
+      return
+    save_dir = os.path.join(save_dir, f"genetic_nn_ai_player_{id}")
+    os.mkdir(save_dir)
+    # save network weights
+    torch.save(self.trump_color_nn, os.path.join(save_dir, f"trump_color_nn.pt"))
+    torch.save(self.prediction_nn, os.path.join(save_dir, f"prediction_nn.pt"))
+    torch.save(self.trick_action_nn, os.path.join(save_dir, f"trick_action_nn.pt"))
+    # save network layers as json file
+    with open(os.path.join(save_dir, f"nn_layers.json"), "w") as file:
+      json.dump({
+          "trump_color_nn_layers": self.trump_color_nn_layers,
+          "prediction_nn_layers": self.prediction_nn_layers,
+          "trick_action_nn_layers": self.trick_action_nn_layers
+      }, file)
+
+  @staticmethod
+  def load(save_dir: str) -> "Genetic_NN_Player":
+    """
+    load the neural networks weights from file
+
+    Args:
+        save_dir (str): directory to load the weights from
+
+    Returns:
+        Genetic_NN_Player: instance of the Genetic_NN_Player class
+    """
+    # load network layers from json file
+    with open(os.path.join(save_dir, "nn_layers.json"), "r") as file:
+      nn_layers: dict[str, tuple[int]] = json.load(file)
+    # load network weights
+    trump_color_nn: Dense_NN = torch.load(os.path.join(save_dir, "trump_color_nn.pt"))
+    prediction_nn: Dense_NN = torch.load(os.path.join(save_dir, "prediction_nn.pt"))
+    trick_action_nn: Dense_NN = torch.load(os.path.join(save_dir, "trick_action_nn.pt"))
+    return Genetic_NN_Player(
+        trump_color_nn_layers = nn_layers["trump_color_nn_layers"],
+        prediction_nn_layers = nn_layers["prediction_nn_layers"],
+        trick_action_nn_layers = nn_layers["trick_action_nn_layers"],
+        trump_color_nn_weights = trump_color_nn.get_weights(),
+        prediction_nn_weights = prediction_nn.get_weights(),
+        trick_action_nn_weights = trick_action_nn.get_weights())
 
   # methods for playing
   def get_trump_color_choice(self,
