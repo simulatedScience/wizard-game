@@ -73,7 +73,7 @@ def get_prediction_features(
     # - [-48 - 20]: number of tricks left # not supported by Game_State yet
     # - [0 - 60]: sum of previous player's bids # not supported by Game_State yet
   """
-  feature_vector: torch.Tensor = torch.zeros(22)
+  feature_vector: torch.Tensor = torch.zeros(20)
   # color-specific and wizard/ jester features
   feature_vector[0:18] = get_trump_choice_features(game_state.players_hands, player_index, game_state)
   # number of players left to bid
@@ -86,8 +86,7 @@ def get_prediction_features(
   # feature_vector[21] = np.sum(game_state.players_predictions)
   return feature_vector
 
-def get_trick_action_features(
-    game_state: Game_State) -> torch.Tensor:
+def get_trick_action_features(game_state: Game_State) -> torch.Tensor:
   """
   create a feature vector for the trick action neural network
 
@@ -131,53 +130,60 @@ def get_trick_action_features(
   valid_actions = [hand[i] for i in valid_indices]
   loosing_actions, winning_actions = _get_winning_actions(valid_actions, game_state)
 
-  feature_tensor: torch.Tensor = torch.zeros(22, len(valid_actions))
+  feature_tensor: torch.Tensor = torch.zeros(len(valid_actions), 22)
   ### features describing the player's hand
   # number of wizards
-  feature_tensor[0, :] = len([card for card in hand if card.value == 14])
+  feature_tensor[:, 0] = len([card for card in hand if card.value == 14])
   # number of jesters
-  feature_tensor[1, :] = len([card for card in hand if card.value == 0])
+  feature_tensor[:, 1] = len([card for card in hand if card.value == 0])
   # number of trumps
   trump_cards: list[Wizard_Card] = [card for card in hand if card.color == game_state.trump_color]
-  feature_tensor[2, :] = len(trump_cards)
+  feature_tensor[:, 2] = len(trump_cards)
   # highest trump card
   if len(trump_cards) > 0:
     trump_values: list[int] = [card.value for card in trump_cards]
-    feature_tensor[3, :] = max(trump_values)
-    feature_tensor[4, :] = game_state.trump_color
+    feature_tensor[:, 3] = max(trump_values)
+    feature_tensor[:, 4] = game_state.trump_color
   # highest non-trump card
   non_trump_cards: list[Wizard_Card] = [card for card in hand if card.color != game_state.trump_color and card.value % 14 != 0]
   if len(non_trump_cards) > 0:
     non_trump_values: list[int] = [card.value for card in non_trump_cards]
-    feature_tensor[5, :] = max(non_trump_values)
-    feature_tensor[6, :] = max(non_trump_values) % 14
+    feature_tensor[:, 5] = max(non_trump_values)
+    feature_tensor[:, 6] = max(non_trump_values) % 14
   # number of cards in hand that could be played without taking the lead
-  feature_tensor[7, :] = len(loosing_actions) # TODO: exclude trumps
+  feature_tensor[:, 7] = len(loosing_actions) # TODO: exclude trumps
   
   ### features describing the current card
   # value of current card
   for action_index, card in enumerate(valid_actions):
-    card_values: torch.Tensor = get_card_values(game_state, hand, feature_tensor, winning_actions, card)
-    feature_tensor[8:14, action_index] = card_values
+    card_values: torch.Tensor = get_card_values(
+      card=card,
+      hand=hand,
+      winning_actions=winning_actions,
+      game_state=game_state)
+    feature_tensor[action_index, 8:14] = card_values
   ### features describing the current leading card
   # number of cards in hand of the same color as current leading card
-  feature_tensor[14, :] = len([card for card in hand if card.color == game_state.winning_card.color])
+  if game_state.winning_card is None:
+    feature_tensor[:, 14] = len(hand)
+  else:
+    feature_tensor[:, 14] = len([card for card in hand if card.color == game_state.winning_card.color])
   # number of players playing after current player in current trick
-  feature_tensor[15, :] = game_state.n_cards_to_be_played
+  feature_tensor[:, 15] = game_state.n_cards_to_be_played
   # number of cards in current trick
-  feature_tensor[16, :] = game_state.n_players - game_state.n_cards_to_be_played
+  feature_tensor[:, 16] = game_state.n_players - game_state.n_cards_to_be_played
   ### features describing the current leading card
   # whether current leading card is a wizard
-  feature_tensor[17, :] = int(game_state.winning_card.value == 14)
+  feature_tensor[:, 17] = int(game_state.winning_card.value == 14) if game_state.winning_card is not None else 0
   # color of current leading card in trick
-  feature_tensor[18, :] = game_state.winning_card.color
+  feature_tensor[:, 18] = game_state.winning_card.color if game_state.winning_card is not None else -1
   # value of current leading card in trick
-  feature_tensor[19, :] = game_state.winning_card.value
+  feature_tensor[:, 19] = game_state.winning_card.value if game_state.winning_card is not None else 0
   ### features describing the game state
   # serving color
-  feature_tensor[20, :] = game_state.serving_color
+  feature_tensor[:, 20] = game_state.serving_color if game_state.serving_color is not None else -1
   # number of tricks needed to match bid
-  feature_tensor[21, :] = game_state.players_won_tricks[game_state.trick_active_player] - game_state.players_predictions[game_state.trick_active_player]
+  feature_tensor[:, 21] = game_state.players_won_tricks[game_state.trick_active_player] - game_state.players_predictions[game_state.trick_active_player]
   
   return feature_tensor, valid_indices
 

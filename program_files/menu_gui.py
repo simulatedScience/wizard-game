@@ -621,7 +621,7 @@ class Menu_Gui():
         "active_button": "#aa6633",  # light brown
         "button_fg": "#dddddd",  # almost white
         "active_button_fg": "#dddddd",  # almost white
-        "red": "#ff3333",
+        "red": "#aa3333",
         "yellow": "#dddd00",
         "green": "#22dd22",
         "blue": "#5588ff",

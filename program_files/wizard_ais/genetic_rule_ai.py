@@ -1,6 +1,5 @@
+import os
 import random
-
-import numpy as np
 
 from program_files.wizard_card import Wizard_Card
 from program_files.game_state import Game_State
@@ -135,6 +134,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     self.n_cards_factor = n_cards_factor
     self.remaining_cards_factor = remaining_cards_factor
 
+  # methods for playing wizard
   def get_trump_color_choice(self, hands: list[Wizard_Card], active_player: int, game_state: Game_State) -> int:
     """
     Choose the trump color based on the current game state.
@@ -201,34 +201,8 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
                * self.prediction_factor)
     # make sure bid is valid
     if bid < 0:
-      # print("-"*30)
-      # print(f"Warning: bid is negative: {bid}")
-      # print(f"{self.min_value_for_win = }")
-      # print(f"{self.min_trump_value_for_win = }")
-      # print(f"{self.round_factor = }")
-      # print(f"{self.jester_factor = }")
-      # print(f"{self.prediction_factor = }")
-      # print(f"non trump summand: {n_non_trumps * self.min_value_for_win}")
-      # print(f"round summand: {self.round_factor * game_state.round_number}")
-      # print(f"trump summand:  {n_trumps * self.min_trump_value_for_win}")
-      # print(f"wizard summand: {n_wizards}")
-      # print(f"jester summand: {n_jesters * self.jester_factor}")
-      # print("-"*30)
       bid: int = 0
     elif bid > game_state.round_number:
-      # print("-"*30)
-      # print(f"Warning: bid is too high: {bid}")
-      # print(f"{self.min_value_for_win = }")
-      # print(f"{self.min_trump_value_for_win = }")
-      # print(f"{self.round_factor = }")
-      # print(f"{self.jester_factor = }")
-      # print(f"{self.prediction_factor = }")
-      # print(f"non trump summand: {n_non_trumps * self.min_value_for_win}")
-      # print(f"round summand: {self.round_factor * game_state.round_number}")
-      # print(f"trump summand:  {n_trumps * self.min_trump_value_for_win}")
-      # print(f"wizard summand: {n_wizards}")
-      # print(f"jester summand: {n_jesters * self.jester_factor}")
-      # print("-"*30)
       bid: int = game_state.round_number
     return bid
 
@@ -331,7 +305,7 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     return "Genetic_Wizard_Ai with parameters:\n  " + "\n  ".join([f"{param_name}: {value}" for param_name, value in self.__dict__.items()])
 
   # methods for genetic algorithm
-  def mutate(self, mutation_rate: float = 0.1) -> None:
+  def mutate(self, mutation_rate: float = 0.1, mutation_range: float = 0.1) -> None:
     """
     Mutate the agent's parameters.
     Mutations are done by multiplying the parameter with a random value between 0.9 and 1.1.
@@ -343,12 +317,12 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
     new_parameters: dict[str, float] = {}
     for param_name, value in self.__dict__.items():
       if random.random() < mutation_rate:
-        new_parameters[param_name] = value * random.uniform(0.9, 1.1)
+        new_parameters[param_name] = value * random.uniform(1 - mutation_range, 1 + mutation_range)
       else:
         new_parameters[param_name] = value
     self.__dict__ = new_parameters
 
-  def crossover(self, other: "Genetic_Rule_Ai", combination_range: float = 0.5) -> "Genetic_Rule_Ai":
+  def crossover(self, other: "Genetic_Rule_Ai", combination_range: float = 0.1) -> "Genetic_Rule_Ai":
     """
     Create a new agent by crossing over the parameters of two agents.
     Recombination is done by considering the distance between the two parents' parameters and then choosing a random value between the two parents' parameters or outside of their range by a factor of `combination_range`.
@@ -371,3 +345,13 @@ class Genetic_Wizard_Player(Wizard_Base_Ai):
       if abs(new_params[param_name]) > 1e3:
         print(f"Warning: {param_name} is is too big after crossover: {new_params[param_name]}")
     return Genetic_Wizard_Player(**new_params)
+
+  def get_parameters(self) -> dict[str, float]:
+    """
+    Get the parameters of the agent.
+
+    returns:
+    --------
+        (dict): dictionary of the agent's parameters
+    """
+    return self.__dict__

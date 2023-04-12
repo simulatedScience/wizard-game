@@ -718,8 +718,9 @@ class Game_Gui():
       player_points_label = self.points_label_matrix[game.round_number - 2][player_index]
       sign, value = pair
       if sign < 0:
-        player_points_label.config(
-            fg=self.gui_colors["red"])
+        player_points_label.config(fg=self.gui_colors["red"])
+      else:
+        player_points_label.config(font=("", 12, "bold"))
       player_points_label.config(text=value)
     time.sleep(self.end_of_round_delay)
     if game.round_number < self.n_rounds:

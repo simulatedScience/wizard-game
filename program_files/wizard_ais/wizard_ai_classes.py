@@ -15,6 +15,7 @@ from .uniform_random_ai import Uniform_Random_Ai
 from .smart_random_ai import Smart_Random_Ai
 from .simple_rule_ai import Simple_Rule_Ai
 from .genetic_rule_ai import Genetic_Rule_Ai
+from .genetic_nn_ai import Genetic_NN_Ai
 
 # add all implemented AI classes to this list.
 #   Everything else is done automatically.
@@ -22,7 +23,8 @@ ai_classes = [
     Uniform_Random_Ai,
     Smart_Random_Ai,
     Simple_Rule_Ai,
-    Genetic_Rule_Ai
+    Genetic_Rule_Ai,
+    Genetic_NN_Ai
 ]
 ai_classes = {ai_class.name: ai_class() for ai_class in ai_classes}
 

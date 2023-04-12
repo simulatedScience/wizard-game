@@ -9,7 +9,7 @@ class Dense_NN(nn.Module):
         input_size: int,
         output_size: int,
         hidden_sizes: list[int],
-        last_activation: nn.Module = nn.Linear()):
+        last_activation: nn.Module = nn.Linear):
     super().__init__()
     self.input = nn.Linear(input_size, hidden_sizes[0])
     self.hidden = nn.ModuleList([nn.Linear(hidden_sizes[i], hidden_sizes[i+1]) for i in range(len(hidden_sizes)-1)])
@@ -41,7 +41,7 @@ class Dense_NN(nn.Module):
     --------
         list[torch.Tensor]: list of weights for each layer
     """
-    return [layer.weight for layer in self.layers]
+    return [param.data for param in self.parameters()]
 
   def set_weights(self, weights: list[torch.Tensor]) -> None:
     """
@@ -53,3 +53,13 @@ class Dense_NN(nn.Module):
     """
     for i, param in enumerate(self.parameters()):
         param.data = weights[i] #.clone()
+
+
+if __name__ == "__main__":
+  # test the neural network and weight getter and setter functions
+  nn = Dense_NN(2, 1, (3,))
+  weights = nn.get_weights()
+  print(weights)
+  new_weights = [torch.ones_like(w) for w in weights]
+  nn.set_weights(new_weights)
+  print(nn.get_weights())

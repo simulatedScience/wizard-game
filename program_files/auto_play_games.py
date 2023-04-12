@@ -284,4 +284,6 @@ class Wizard_Auto_Play():
       ax2.grid(color="#dddddd")
       ax2.legend(loc="center left", bbox_to_anchor=(1.02, 1.02))
       # ax2.legend(loc="center right")
+      # adjust borders of figure
+      fig.subplots_adjust(left=0.05, right=0.85, top=0.95, bottom=0.1)
       plt.show()

@@ -1,11 +1,15 @@
 """
 this module implements methods to automatically let AIs
-    play a specified number of games to determine which
-    one is the best.
+  play a specified number of games to determine which
+  one is the best. Contrary to auto_play_games.py,
+  this module works on given instances of AIs rather than
+  creating the instances itself. This has the limitation of
+  not being able to combine different AIs into one player,
+  but it allows for differently parametrized instances of the
+  same AI to be compared.
 
-last edited: 26.05.2022
+last edited: 11.04.2023
 author: Sebastian Jost
-version 0.2
 """
 import tkinter as tk
 import multiprocessing as mp
@@ -15,15 +19,13 @@ import matplotlib.pyplot as plt
 
 from program_files.game_state import Game_State
 from program_files.wizard_ais.ai_base_class import Wizard_Base_Ai
-from program_files.wizard_ais.genetic_rule_ai import Genetic_Wizard_Player
 from program_files.helper_functions import get_hands
-from program_files.wizard_ais.wizard_ai_classes import ai_trump_chooser_methods, ai_bids_chooser_methods, ai_trick_play_methods
 
 
 class Genetic_Auto_Play():
   def __init__(self,
                n_players,
-               ai_instances: list[Genetic_Wizard_Player],
+               ai_instances: list[Wizard_Base_Ai],
                limit_choices: bool = False,
                max_rounds: int = 20,
                shuffle_players: bool = False):
@@ -175,7 +177,7 @@ class Genetic_Auto_Play():
     return self.average_scores, self.win_ratios
 
 
-  def play_game(self, ai_instances: list[Genetic_Wizard_Player]):
+  def play_game(self, ai_instances: list[Wizard_Base_Ai]):
     """
     play one game with the rules set in `self`
     """
@@ -185,7 +187,7 @@ class Genetic_Auto_Play():
     return game.players_total_points
 
 
-  def play_round(self, round_nbr: int, game: Game_State, limit_choices: bool, ai_instances: list[Genetic_Wizard_Player]):
+  def play_round(self, round_nbr: int, game: Game_State, limit_choices: bool, ai_instances: list[Wizard_Base_Ai]):
     """
     play the given round with `self.n_players` players.
     """
@@ -219,7 +221,7 @@ class Genetic_Auto_Play():
       self.play_trick(game, ai_instances)
 
 
-  def play_trick(self, game: Game_State, ai_instances: list[Genetic_Wizard_Player]):
+  def play_trick(self, game: Game_State, ai_instances: list[Wizard_Base_Ai]):
     """
     play one trick and advance the game object accordingly
     """
