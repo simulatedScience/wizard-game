@@ -157,25 +157,19 @@ if __name__ == "__main__":
   #     mutation_range = 0.01,
   #     track_n_best_players = 2
   # )
-  # best_parameters, best_player_evolution = main(
-  #     population_size = 50,
-  #     load_population = False,
-  #     n_generations = 1000,
-  #     max_time_s = 60*60,
-  #     n_games_per_generation = 40,
-  #     n_repetitions_per_game = 3,
-  #     crossover_range = 0.01,
-  #     mutation_rate = 0.1,
-  #     mutation_range = 0.01,
-  #     track_n_best_players = 3
-  # )
+  best_parameters, best_player_evolution = main(
+      population_size = 100,
+      load_population = True,
+      n_generations = 30,
+      max_time_s = 60*10,
+      n_games_per_generation = 40,
+      n_repetitions_per_game = 5,
+      crossover_range = 0.01,
+      mutation_rate = 0.1,
+      mutation_range = 0.01,
+      track_n_best_players = 3
+  )
   with open("best_GenNN_player_evolution.pickle", "rb") as file:
     best_player_evolution = pickle.load(file)
-  for i, generation in enumerate(best_player_evolution):
-    if generation == 0:
-      best_player_evolution = best_player_evolution[:i]
-      with open("best_GenNN_player_evolution.pickle", "wb") as file:
-        pickle.dump(best_player_evolution, file)
-      break
   # save_best_networks(best_player_evolution)
   plot_score_evolution(best_player_evolution)

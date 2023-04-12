@@ -51,6 +51,8 @@ def get_trump_choice_features(
   feature_vector[16] = len([card for card in hand if card.value == 14])
   # number of jesters
   feature_vector[17] = len([card for card in hand if card.value == 0])
+  # normalize feature vector to values in [-1, 1]
+  feature_vector = feature_vector / torch.tensor([13, 13, 0, 13, 13, 13, 0, 13, 13, 13, 0, 13, 13, 13, 0, 13, 4, 4])
   return feature_vector
 
 
@@ -84,6 +86,8 @@ def get_prediction_features(
   # feature_vector[20] = game_state.round_number - np.sum(game_state.players_predictions)
   # sum of previous player's bids
   # feature_vector[21] = np.sum(game_state.players_predictions)
+  # normalize feature vector to values in [-1, 1]
+  feature_vector = feature_vector / torch.tensor([13, 13, 0, 13, 13, 13, 0, 13, 13, 13, 0, 13, 13, 13, 0, 13, 4, 4, 5, 5])
   return feature_vector
 
 def get_trick_action_features(game_state: Game_State) -> torch.Tensor:
@@ -94,8 +98,8 @@ def get_trick_action_features(game_state: Game_State) -> torch.Tensor:
   - [0 - 4]: number of wizards in hand
   - [0 - 4]: number of jesters in hand
   - [0 - 12]: number of trumps in hand
-  - [0, 1] and [0 - 14]: color and value of highest trump card in hand (if any)
-  - [0 - 4] and [0 - 14]: color and value of highest non-trump card in hand (if any)
+  - [0, 1] and [0 - 13]: color and value of highest trump card in hand (if any)
+  - [0 - 4] and [0 - 13]: color and value of highest non-trump card in hand (if any)
   - [0 - 20]: number of cards in hand that could be played without taking the lead # TODO: exclude trumps
   # features describing the current card
   - [0 - 14]: value of current card
@@ -148,8 +152,9 @@ def get_trick_action_features(game_state: Game_State) -> torch.Tensor:
   non_trump_cards: list[Wizard_Card] = [card for card in hand if card.color != game_state.trump_color and card.value % 14 != 0]
   if len(non_trump_cards) > 0:
     non_trump_values: list[int] = [card.value for card in non_trump_cards]
-    feature_tensor[:, 5] = max(non_trump_values)
-    feature_tensor[:, 6] = max(non_trump_values) % 14
+    feature_tensor[:, 5] = max(non_trump_values) % 14 # ignore wizards
+    # color of highest non-trump card
+    feature_tensor[:, 6] = [card.value for card in non_trump_cards if card.value == feature_tensor[0, 5]][0]
   # number of cards in hand that could be played without taking the lead
   feature_tensor[:, 7] = len(loosing_actions) # TODO: exclude trumps
   
@@ -184,7 +189,8 @@ def get_trick_action_features(game_state: Game_State) -> torch.Tensor:
   feature_tensor[:, 20] = game_state.serving_color if game_state.serving_color is not None else -1
   # number of tricks needed to match bid
   feature_tensor[:, 21] = game_state.players_won_tricks[game_state.trick_active_player] - game_state.players_predictions[game_state.trick_active_player]
-  
+  # normalize feature vector to values in [-1, 1]
+  feature_tensor = feature_tensor / torch.tensor([4, 4, 12, 13, 4, 13, 4, 20, 14, 4, 1, 1, 12, 1, 12, 5, 5, 1, 4, 14, 4, 20])
   return feature_tensor, valid_indices
 
 def get_card_values(
