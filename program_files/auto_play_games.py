@@ -150,7 +150,7 @@ class Wizard_Auto_Play():
     if self.shuffle_players:
       self.random_order = np.arange(self.n_players)
 
-    process_pool: mp.Pool = mp.Pool(mp.cpu_count() * 2)
+    process_pool: mp.Pool = mp.Pool(mp.cpu_count() // 2)
     new_results = process_pool.map(self.play_record_game, range(n_games_start, n_games_end))
     process_pool.close()
     process_pool.join()

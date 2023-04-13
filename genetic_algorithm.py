@@ -50,8 +50,9 @@ def train_genetic_ai(
         track_n_best_players)
     best_player_evolution[generation] = best_players
     # show progress bar for training
-    print(f"\rTraining AI: {generation + 1}/{n_generations} generations.  Estimated remaining time: {(time.time() - start_time) / (generation + 1) * (n_generations - generation - 1):.2f} s.", end="")
-    if time.time() - start_time > max_time_s:
+    current_time = time.time() - start_time
+    print(f"\rTraining AI: {generation + 1}/{n_generations} generations in {current_time: 6.0f} s. Estimated remaining time: {current_time / (generation + 1) * (n_generations - generation - 1):6.0f} s.", end="")
+    if current_time > max_time_s:
       print(f"\nStopping training after {generation + 1} generations.  Maximum time of {max_time_s} s exceeded.")
       best_player_evolution = best_player_evolution[:generation + 1]
       break
@@ -90,27 +91,28 @@ def evaluate_population(
   individual_scores: list[list[float]] = [[] for _ in range(len(population))]
   individual_indices: list[int] = list(range(len(population)))
   if n_repetitions_per_game > 5:
-    process_pool: mp.Pool = mp.Pool(mp.cpu_count() * 2)
-  for n_players in range(3, 7):
-    for _ in range(n_games_per_generation):
-      player_indices: np.ndarray[int] = np.random.choice(individual_indices, size=n_players, replace=False)
-      players: list[Genetic_Rule_Player] = [population[i] for i in player_indices]
-      auto_game: Genetic_Auto_Play = Genetic_Auto_Play(
-        n_players=n_players,
-        limit_choices=False,
-        max_rounds=20,
-        shuffle_players=True,
-        ai_instances=players,
+    process_pool: mp.Pool = mp.Pool(mp.cpu_count() // 2)
+  # for n_players in range(3, 7):
+  n_players = 3
+  for _ in range(n_games_per_generation):
+    player_indices: np.ndarray[int] = np.random.choice(individual_indices, size=n_players, replace=False)
+    players: list[Genetic_Rule_Player] = [population[i] for i in player_indices]
+    auto_game: Genetic_Auto_Play = Genetic_Auto_Play(
+      n_players=n_players,
+      limit_choices=False,
+      max_rounds=20,
+      shuffle_players=True,
+      ai_instances=players,
+    )
+    if n_repetitions_per_game > 5:
+      average_scores_evolution, _ = auto_game.auto_play_multi_threaded(
+          n_games = n_repetitions_per_game,
+          process_pool = process_pool,
       )
-      if n_repetitions_per_game > 5:
-        average_scores_evolution, _ = auto_game.auto_play_multi_threaded(
-            n_games = n_repetitions_per_game,
-            process_pool = process_pool,
-        )
-      else:
-        average_scores_evolution, _ = auto_game.auto_play_single_threaded(n_games = n_repetitions_per_game)
-      for i, player_index in enumerate(player_indices):
-        individual_scores[player_index].append(average_scores_evolution[-1][i])
+    else:
+      average_scores_evolution, _ = auto_game.auto_play_single_threaded(n_games = n_repetitions_per_game)
+    for i, player_index in enumerate(player_indices):
+      individual_scores[player_index].append(average_scores_evolution[-1][i])
   if n_repetitions_per_game > 5:
     process_pool.close()
     process_pool.join()
@@ -142,7 +144,7 @@ def evolve_population(
   """
   # select best players
   sorted_population: list[tuple[float, Genetic_Rule_Player]] = sorted(zip(population_scores, population), reverse=True, key=lambda x: x[0])
-  best_players: list[Genetic_Rule_Player] = [player for _, player in sorted_population][:len(population)//2]
+  best_players: list[Genetic_Rule_Player] = [player for _, player in sorted_population][:len(population)//10]
   # create new population
   n_children: int = len(population) - len(best_players)
   # multi threaded child creation
