@@ -16,6 +16,7 @@ import multiprocessing as mp
 
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.stats as stats
 
 from program_files.game_state import Game_State
 from program_files.wizard_ais.ai_base_class import Wizard_Base_Ai
@@ -24,112 +25,85 @@ from program_files.helper_functions import get_hands
 
 class Genetic_Auto_Play():
   def __init__(self,
-               n_players,
+               n_players: int,
                ai_instances: list[Wizard_Base_Ai],
-               limit_choices: bool = False,
                max_rounds: int = 20,
-               shuffle_players: bool = False):
+               confidence_level: float = 0.95,
+               limit_choices: bool = False, # not implemented
+               ):
     """
     initialize auto-play setup
 
     inputs:
     -------
-      n_players (int): number of players in the game
-      limit_choices (bool): whether or not to allow the number of bids can equal the number of tricks
+        n_players (int): number of players in the game
+        limit_choices (bool): whether or not to allow the number of bids can equal the number of tricks (not implemented)
         max_rounds (int): number of rounds to be played
-        ai_player_choices (list) of (dict): settings for player names  to use AI to calculate actions during the game.
-        shuffle_players (bool): whether to randomize the order of players between games for more general results.
+        ai_instances (list[Wizard_Base_Ai]): list of AI instances to be used in the games
+        confidence_level (float): confidence level for player scores (score = lower bound of confidence interval)
     """
-    self.n_players = n_players
-    self.limit_choices = limit_choices
-    self.n_rounds = min(max_rounds, 60 // self.n_players) + 1
-    self.ai_instances = ai_instances
-    self.shuffle_players = shuffle_players
+    self.n_players: int = n_players
+    self.limit_choices: bool = limit_choices
+    self.n_rounds: int = min(max_rounds, 60 // self.n_players) + 1
+    self.ai_instances: list[Wizard_Base_Ai] = ai_instances
+    self.confidence_level: float = confidence_level / 2 # two-sided confidence interval
 
     self.games_played = 0
-    self.set_history_variables(n_players, 0)
 
 
-  def set_history_variables(self, n_players, n_games):
-    self.average_scores: np.ndarray = np.zeros((n_games, n_players))
-    self._score_sums: np.ndarray = np.zeros(n_players)
-    self.relative_scores: np.ndarray = np.zeros(n_players)
-    self._win_counts: np.ndarray = np.zeros(n_players)
-    self.win_ratios: np.ndarray = np.zeros((n_games, n_players))
-
-
-  def auto_play_single_threaded(self,
-      n_games: int, 
-      reset_stats: bool = True):
+  def auto_play_single_threaded(self, n_games: int) -> np.ndarray:
     """
-    automatically play `n_games` with the set AIs and record the results in self.average_scores, self.relative_scores and self.win_ratios
+    automatically play `n_games` with the set AIs and record the results in self.average_scores and self.win_ratios
 
     This method uses only one thread and runs all games one after the other.
 
     Args:
         n_games (int): number of games to be played
-        reset_stats (bool): whether to start counting at 0 or continue counting old scores
 
     returns:
-        (np.ndarray): average scores for each player
-        (np.ndarray): win ratio for each player
+        (np.ndarray): scores for each player as lower bound of confidence interval
     """
-    if reset_stats:  # reset statistics
-      self.set_history_variables(self.n_players, n_games)
-      n_games_start = 0
-      n_games_end = n_games
-    else:  # continue counting with old scores
-      n_games_start = self.average_scores.shape[0]
-      n_games_end = n_games_start + n_games
-      self.average_scores = np.vstack(
-          [self.win_ratios, np.zeros(n_games, self.n_players)])
-      self.win_ratios = np.vstack(
-          [self.win_ratios, np.zeros(n_games, self.n_players)])
+    scores: np.ndarray = np.zeros(self.n_games, self.n_players)
+    games_played: int = 0
 
-    if self.shuffle_players:
-      self.random_order = np.arange(self.n_players)
+    random_order = np.arange(self.n_players)
 
-    for n in range(n_games_start, n_games_end):
-      if self.shuffle_players:
-        np.random.shuffle(self.random_order)
-        ai_instances = [self.ai_instances[i] for i in self.random_order]
-      else:
-        ai_instances = self.ai_instances
-      player_scores = self.play_game(ai_instances)
-      # update history variables
-      self.games_played += 1
-      if self.shuffle_players:
-        self._score_sums[self.random_order] += player_scores
-        self.average_scores[n, :] = self._score_sums / self.games_played
-        self._win_counts[self.random_order] += player_scores == np.max(player_scores)
-        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
-      else:
-        self._score_sums += player_scores
-        self.average_scores[n, :] = self._score_sums / self.games_played
-        self._win_counts += player_scores == np.max(player_scores)
-        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
-
-    return self.average_scores, self.win_ratios
+    for n in range(n_games):
+      np.random.shuffle(random_order)
+      ai_instances = [self.ai_instances[i] for i in random_order]
+      player_scores: np.ndarray = self.play_game(ai_instances)
+      scores[n, :] = player_scores
+    # calculate average scores and standard deviations for each player
+    avg_scores: np.ndarray = np.cumsum(scores, axis=0) / n_games
+    standard_deviations: np.ndarray = np.std(scores, axis=0)
+    # calculate confidence intervals
+    z_score: float = stats.norm.ppf(1 - (1 - self.confidence_level) / 2)
+    lower_confidence_bound: np.ndarray = avg_scores - standard_deviations / np.sqrt(n_games) * z_score
+    return lower_confidence_bound
 
 
-  def play_record_game(self, n: int) -> np.ndarray:
-    if self.shuffle_players:
-      np.random.shuffle(self.random_order)
-      ai_instances = [self.ai_instances[i] for i in self.random_order]
-    else:
-      ai_instances = self.ai_instances
-    player_scores = self.play_game(ai_instances)
-    player_scores[self.random_order] = player_scores # record results in proper order
+  def play_record_game(self, *_) -> np.ndarray:
+    """
+    play a single game and return the final scores of the players
+
+    returns:
+    --------
+        (np.ndarray): final scores of the players
+    """
+    random_order: np.ndarray = np.arange(self.n_players)
+    np.random.shuffle(random_order)
+    ai_instances: list[Wizard_Base_Ai] = [self.ai_instances[i] for i in random_order]
+    player_scores: np.ndarray = self.play_game(ai_instances)
+    player_scores[random_order] = player_scores # record results in proper order
     return player_scores
 
 
   def auto_play_multi_threaded(self, 
       n_games: int, 
       process_pool: mp.Pool,
-      reset_stats: bool = True,
-      ) -> tuple[np.ndarray, np.ndarray]:
+      ) -> np.ndarray:
     """
-    automatically play `n_games` with the set AIs and record the results in self.average_scores, self.relative_scores and self.win_ratios
+    automatically play `n_games` with the set AIs and record the results in self.average_scores and self.win_ratios
 
     This method uses only one thread and runs all games one after the other.
 
@@ -139,42 +113,18 @@ class Genetic_Auto_Play():
 
     returns:
         (np.ndarray): average scores for each player
-        (np.ndarray): win ratio for each player
     """
-    if reset_stats:  # reset statistics
-      self.set_history_variables(self.n_players, n_games)
-      n_games_start = 0
-      n_games_end = n_games
-    else:  # continue counting with old scores
-      n_games_start = self.average_scores.shape[0]
-      n_games_end = n_games_start + n_games
-      self.average_scores = np.vstack(
-          [self.win_ratios, np.zeros(n_games, self.n_players)])
-      self.win_ratios = np.vstack(
-          [self.win_ratios, np.zeros(n_games, self.n_players)])
-
-    if self.shuffle_players:
-      self.random_order = np.arange(self.n_players)
-
-    new_results = process_pool.map(self.play_record_game, range(n_games_start, n_games_end))
-
-    # update history variables
-    for i, player_scores in enumerate(new_results):
-      n = i + n_games_start
-      self.games_played += 1
-      if self.shuffle_players:
-        self._score_sums += player_scores
-        self.average_scores[n, :] = self._score_sums / self.games_played
-        self._win_counts += player_scores == np.max(player_scores)
-        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
-      else:
-        self._score_sums += player_scores
-        self.average_scores[n, :] = self._score_sums / self.games_played
-        self._win_counts += player_scores == np.max(player_scores)
-        self.win_ratios[n, :] = self._win_counts / np.sum(self._win_counts)
-      
-
-    return self.average_scores, self.win_ratios
+    # play games in parallel
+    result_list: list[np.ndarray] = process_pool.map(self.play_record_game, range(n_games))
+    # record results
+    scores: np.ndarray = np.array(result_list)
+    # calculate average scores and standard deviations for each player
+    avg_scores: np.ndarray = np.cumsum(scores, axis=0) / n_games
+    standard_deviations: np.ndarray = np.std(scores, axis=0)
+    # calculate confidence intervals
+    z_score: float = stats.norm.ppf(1 - (1 - self.confidence_level) / 2)
+    lower_confidence_bound: np.ndarray = avg_scores - standard_deviations / np.sqrt(n_games) * z_score
+    return lower_confidence_bound
 
 
   def play_game(self, ai_instances: list[Wizard_Base_Ai]):
@@ -277,9 +227,9 @@ class Genetic_Auto_Play():
             linestyle="--",
             color=colors[i])
             # label=self.win_ratios[-1,i])
-        ax2.plot(self.average_scores[:, i], label=player_labels[i], color=colors[i], alpha=0.5)
+        ax2.plot(self.scores[:, i], label=player_labels[i], color=colors[i], alpha=0.5)
         ax2.hlines(
-            (self.average_scores[-1, i],),
+            (self.scores[-1, i],),
             xmin=0,
             xmax=self.games_played,
             linestyle="--",

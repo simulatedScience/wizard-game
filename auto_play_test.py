@@ -75,4 +75,4 @@ def main(n_games=300):
 
 if __name__ == "__main__":
   # help(plt.legend)
-  main(n_games=1000)
+  main(n_games=500)

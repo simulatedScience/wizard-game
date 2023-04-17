@@ -101,18 +101,17 @@ def evaluate_population(
       n_players=n_players,
       limit_choices=False,
       max_rounds=20,
-      shuffle_players=True,
       ai_instances=players,
     )
     if n_repetitions_per_game > 5:
-      average_scores_evolution, _ = auto_game.auto_play_multi_threaded(
+      scores = auto_game.auto_play_multi_threaded(
           n_games = n_repetitions_per_game,
           process_pool = process_pool,
       )
     else:
-      average_scores_evolution, _ = auto_game.auto_play_single_threaded(n_games = n_repetitions_per_game)
+      scores = auto_game.auto_play_single_threaded(n_games = n_repetitions_per_game)
     for i, player_index in enumerate(player_indices):
-      individual_scores[player_index].append(average_scores_evolution[-1][i])
+      individual_scores[player_index].append(scores[i])
   if n_repetitions_per_game > 5:
     process_pool.close()
     process_pool.join()

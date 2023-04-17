@@ -147,30 +147,31 @@ def plot_score_evolution(best_player_evolution: list[list[tuple[float, Genetic_N
   plt.show()
 
 if __name__ == "__main__":
-  best_parameters, best_player_evolution = main(
-      population_size = 50,
-      n_generations = 30,
-      max_time_s = 60*20, # 20min
-      n_games_per_generation = 30,
-      n_repetitions_per_game = 50,
-      crossover_range = 0.01,
-      mutation_rate = 0.05,
-      mutation_range = 0.1,
-      track_n_best_players = 5
-  )
   # best_parameters, best_player_evolution = main(
-  #     population_size = 150,
+  #     population_size = 20,
   #     load_population = False,
-  #     n_generations = 500,
-  #     max_time_s = 60*30*15, # 8.5 hours
-  #     n_games_per_generation = 50,
-  #     n_repetitions_per_game = 5,
+  #     n_generations = 30,
+  #     max_time_s = 60*3, # 3 minutes
+  #     n_games_per_generation = 5,
+  #     n_repetitions_per_game = 30,
   #     crossover_range = 0.01,
-  #     mutation_rate = 0.1,
-  #     mutation_range = 0.02,
+  #     mutation_rate = 0.05,
+  #     mutation_range = 0.1,
+  #     track_n_best_players = 5
+  # )
+  # best_parameters, best_player_evolution = main(
+  #     population_size = 100,
+  #     load_population = False,
+  #     n_generations = 100,
+  #     max_time_s = 60*30*3, # 1.5 ours
+  #     n_games_per_generation = 50,
+  #     n_repetitions_per_game = 30,
+  #     crossover_range = 0.01,
+  #     mutation_rate = 0.05,
+  #     mutation_range = 0.1,
   #     track_n_best_players = 5
   # )
   with open("best_GenNN_player_evolution.pickle", "rb") as file:
     best_player_evolution = pickle.load(file)
-  # save_best_networks(best_player_evolution)
+  save_best_networks(best_player_evolution)
   plot_score_evolution(best_player_evolution)
