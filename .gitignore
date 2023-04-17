@@ -4,3 +4,9 @@ __pycache__/
 *.pyo
 *.pyd
 genetic_ai_training_history/
+best_GenNN_player_evolution_5.pickle
+best_GenNN_player_evolution_4.pickle
+best_GenNN_player_evolution_3.pickle
+best_GenNN_player_evolution_2.pickle
+best_GenNN_player_evolution_1.pickle
+best_GenNN_player_evolution.pickle

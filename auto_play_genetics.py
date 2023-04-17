@@ -63,8 +63,7 @@ class Genetic_Auto_Play():
     returns:
         (np.ndarray): scores for each player as lower bound of confidence interval
     """
-    scores: np.ndarray = np.zeros(self.n_games, self.n_players)
-    games_played: int = 0
+    scores: np.ndarray = np.zeros((n_games, self.n_players))
 
     random_order = np.arange(self.n_players)
 
@@ -74,7 +73,7 @@ class Genetic_Auto_Play():
       player_scores: np.ndarray = self.play_game(ai_instances)
       scores[n, :] = player_scores
     # calculate average scores and standard deviations for each player
-    avg_scores: np.ndarray = np.cumsum(scores, axis=0) / n_games
+    avg_scores: np.ndarray = np.sum(scores, axis=0) / n_games
     standard_deviations: np.ndarray = np.std(scores, axis=0)
     # calculate confidence intervals
     z_score: float = stats.norm.ppf(1 - (1 - self.confidence_level) / 2)
@@ -112,14 +111,14 @@ class Genetic_Auto_Play():
         reset_stats (bool): whether to start counting at 0 or continue counting old scores
 
     returns:
-        (np.ndarray): average scores for each player
+        (np.ndarray): scores for each player as lower bound of confidence interval
     """
     # play games in parallel
     result_list: list[np.ndarray] = process_pool.map(self.play_record_game, range(n_games))
     # record results
     scores: np.ndarray = np.array(result_list)
     # calculate average scores and standard deviations for each player
-    avg_scores: np.ndarray = np.cumsum(scores, axis=0) / n_games
+    avg_scores: np.ndarray = np.sum(scores, axis=0) / n_games
     standard_deviations: np.ndarray = np.std(scores, axis=0)
     # calculate confidence intervals
     z_score: float = stats.norm.ppf(1 - (1 - self.confidence_level) / 2)

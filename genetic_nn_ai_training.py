@@ -4,13 +4,14 @@ This file contains the functions to train neural networks using a genetic algori
 Author: Sebastian Jost
 """
 import os
+import json
 import pickle
 from tkinter import Tk, filedialog
 
 import matplotlib.pyplot as plt
 
 from program_files.wizard_ais.genetic_nn_ai import Genetic_NN_Player
-from genetic_algorithm import train_genetic_ai
+from genetic_algorithm import train_genetic_ai, plot_diversity_measures, load_diversity_values
 
 def init_population(
     population_size: int,
@@ -103,7 +104,7 @@ def main(
     else:
       raise FileNotFoundError("No valid path chosen.")
   # train population
-  best_parameters, best_player_evolution = train_genetic_ai(
+  best_parameters, best_player_evolution, pairwise_distances, fitness_variances = train_genetic_ai(
     population,
     n_generations,
     max_time_s,
@@ -113,9 +114,7 @@ def main(
     mutation_rate,
     mutation_range,
     track_n_best_players)
-  with open("best_GenNN_player_evolution.pickle", "wb") as file:
-    pickle.dump(best_player_evolution, file)
-  return best_parameters, best_player_evolution
+  return best_parameters, best_player_evolution, pairwise_distances, fitness_variances
 
 def save_best_networks(best_player_evolution: list[list[tuple[float, Genetic_NN_Player]]]):
   """
@@ -147,18 +146,18 @@ def plot_score_evolution(best_player_evolution: list[list[tuple[float, Genetic_N
   plt.show()
 
 if __name__ == "__main__":
-  # best_parameters, best_player_evolution = main(
-  #     population_size = 20,
-  #     load_population = False,
-  #     n_generations = 30,
-  #     max_time_s = 60*3, # 3 minutes
-  #     n_games_per_generation = 5,
-  #     n_repetitions_per_game = 30,
-  #     crossover_range = 0.01,
-  #     mutation_rate = 0.05,
-  #     mutation_range = 0.1,
-  #     track_n_best_players = 5
-  # )
+  best_parameters, best_player_evolution, pairwise_distances, fitness_variances = main(
+      population_size = 50,
+      load_population = False,
+      n_generations = 200,
+      max_time_s = 60*60*8, # 3 minutes
+      n_games_per_generation = 50,
+      n_repetitions_per_game = 40,
+      crossover_range = 0.01,
+      mutation_rate = 0.05,
+      mutation_range = 0.05,
+      track_n_best_players = 5
+  )
   # best_parameters, best_player_evolution = main(
   #     population_size = 100,
   #     load_population = False,
@@ -171,7 +170,10 @@ if __name__ == "__main__":
   #     mutation_range = 0.1,
   #     track_n_best_players = 5
   # )
-  with open("best_GenNN_player_evolution.pickle", "rb") as file:
-    best_player_evolution = pickle.load(file)
+  # with open("best_GenNN_player_evolution.pickle", "rb") as file:
+  #   best_player_evolution = pickle.load(file)
+  # best_player_evolution = load_best_player_evolution()
   save_best_networks(best_player_evolution)
   plot_score_evolution(best_player_evolution)
+  pairwise_distances, fitness_variances = load_diversity_values()
+  plot_diversity_measures(pairwise_distances, fitness_variances)
