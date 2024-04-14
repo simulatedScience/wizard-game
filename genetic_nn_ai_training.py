@@ -9,9 +9,10 @@ import pickle
 from tkinter import Tk, filedialog
 
 import matplotlib.pyplot as plt
+from memory_profiler import profile
 
 from program_files.wizard_ais.genetic_nn_ai import Genetic_NN_Player
-from genetic_algorithm import train_genetic_ai, plot_diversity_measures, load_diversity_values
+from genetic_algorithm import train_genetic_ai, plot_diversity_measures, load_diversity_values, load_best_player_evolution
 
 def init_population(
     population_size: int,
@@ -53,13 +54,17 @@ def load_genetic_nn_population(path: str) -> list[Genetic_NN_Player]:
       list[Genetic_NN_Player]: list of players
   """
   population: list[Genetic_NN_Player] = []
+  # loop through all subdirectories
   for player_name in os.listdir(path):
+    if "." in player_name: # ignore files
+      continue
     player_path: str = os.path.join(path, player_name)
     player: Genetic_NN_Player = Genetic_NN_Player.load(player_path)
     population.append(player)
   print(f"Loaded {len(population)} players from {path.strip(os.curdir)}")
   return population
 
+# @profile
 def main(
     population_size: int = 100,
     load_population: bool = False,
@@ -128,7 +133,7 @@ def save_best_networks(best_player_evolution: list[list[tuple[float, Genetic_NN_
   best_player.save()
 
 
-def plot_score_evolution(best_player_evolution: list[list[tuple[float, Genetic_NN_Player]]]):
+def plot_score_evolution(best_player_evolution: list[list[tuple[float, Genetic_NN_Player]]], to_file: bool = False):
   """
   Plot the score evolution of the best player of each generation.
 
@@ -143,37 +148,45 @@ def plot_score_evolution(best_player_evolution: list[list[tuple[float, Genetic_N
   plt.ylabel("Score")
   plt.title(f"Score evolution of the best {n_players} players")
   plt.grid(color="#dddddd")
-  plt.show()
+  if to_file:
+    # create directory if it does not exist
+    if not os.path.exists("training_results"):
+      os.makedirs("training_results")
+    plt.savefig(os.path.join("training_results", "score_evolution.png"))
+  else:
+    plt.show()
+
 
 if __name__ == "__main__":
+  # best_parameters, best_player_evolution, pairwise_distances, fitness_variances = main(
+  #     population_size = 50,
+  #     load_population = False,
+  #     n_generations = 200,
+  #     max_time_s = 60*60*3, # 3 hours
+  #     n_games_per_generation = 50,
+  #     n_repetitions_per_game = 40,
+  #     crossover_range = 0.,
+  #     mutation_rate = 0.05,
+  #     mutation_range = 0.05,
+  #     track_n_best_players = 5
+  # )
   best_parameters, best_player_evolution, pairwise_distances, fitness_variances = main(
-      population_size = 50,
+      population_size = 10,
       load_population = False,
-      n_generations = 200,
-      max_time_s = 60*60*8, # 3 minutes
-      n_games_per_generation = 50,
+      n_generations = 5,
+      max_time_s = 60*30*1, # 60 seconds
+      n_games_per_generation = 100,
       n_repetitions_per_game = 40,
-      crossover_range = 0.01,
+      crossover_range = 0.05,
       mutation_rate = 0.05,
       mutation_range = 0.05,
       track_n_best_players = 5
   )
-  # best_parameters, best_player_evolution = main(
-  #     population_size = 100,
-  #     load_population = False,
-  #     n_generations = 100,
-  #     max_time_s = 60*30*3, # 1.5 ours
-  #     n_games_per_generation = 50,
-  #     n_repetitions_per_game = 30,
-  #     crossover_range = 0.01,
-  #     mutation_rate = 0.05,
-  #     mutation_range = 0.1,
-  #     track_n_best_players = 5
-  # )
   # with open("best_GenNN_player_evolution.pickle", "rb") as file:
   #   best_player_evolution = pickle.load(file)
   # best_player_evolution = load_best_player_evolution()
-  save_best_networks(best_player_evolution)
-  plot_score_evolution(best_player_evolution)
-  pairwise_distances, fitness_variances = load_diversity_values()
-  plot_diversity_measures(pairwise_distances, fitness_variances)
+  # save_best_networks(best_player_evolution)
+  to_file: bool = False
+  plot_score_evolution(best_player_evolution, to_file=to_file)
+  # pairwise_distances, fitness_variances = load_diversity_values()
+  plot_diversity_measures(pairwise_distances, fitness_variances, to_file=to_file)

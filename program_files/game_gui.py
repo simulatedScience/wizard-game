@@ -653,7 +653,6 @@ class Game_Gui():
       else:
         print(f"{ai_action=}")  # TODO: show ai action hint in GUI
     if self.ai_player_types[player_index]["hints_var"] or player_mode == "human input":
-
       self._show_hand(game.players_hands[player_index], player_index, clickable=True)
 
 
