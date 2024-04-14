@@ -10,12 +10,15 @@ from tkinter import Tk, filedialog
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+from memory_profiler import profile
 
-from program_files.wizard_ais.genetic_rule_ai import Genetic_Rule_Player
+from program_files.wizard_ais.genetic_rule_ai import Genetic_Wizard_Player
 from auto_play_genetics import Genetic_Auto_Play
 
+
+# @profile
 def train_genetic_ai(
-    population: list[Genetic_Rule_Player],
+    population: list[Genetic_Wizard_Player],
     n_generations: int = 100,
     max_time_s: float = 60 * 60, # 1 hour
     n_games_per_generation: int = 100,
@@ -43,15 +46,23 @@ def train_genetic_ai(
       list[list[tuple[float, Genetic_Wizard_Player]]]: list of the best players of each generation and their average score
   """
   if n_games_per_generation < len(population) / 3:
-    raise ValueError("n_games_per_generation must be at least 3 times larger than the population size")
-  best_player_evolution: list[list[tuple[float, Genetic_Rule_Player]]] = [0] * n_generations
+    raise ValueError("n_games_per_generation must be at least the population size divided by 3.")
+  best_player_evolution: list[list[tuple[float, Genetic_Wizard_Player]]] = [0] * n_generations
   start_time: float = time.time()
   # Initialize lists to store diversity measures
   pairwise_distances: list[float] = [0] * n_generations
   fitness_variances: list[float] = [0] * n_generations
+  
+  # create process pool for multiprocessing
+  print(f"Started training using {mp.cpu_count()} processes.")
+  process_pool: mp.Pool = mp.Pool(mp.cpu_count())
   # train population
   for generation in range(n_generations):
-    population_scores: list[float] = evaluate_population(population, n_games_per_generation, n_repetitions_per_game)
+    population_scores: list[float] = evaluate_population(
+        population,
+        n_games_per_generation,
+        n_repetitions_per_game,
+        process_pool)
     population, best_players = evolve_population(
         population,
         population_scores,
@@ -65,21 +76,27 @@ def train_genetic_ai(
     fitness_variances[generation] = fitness_variance(population_scores)
     # show progress bar for training
     current_time = time.time() - start_time
-    print(f"\rTraining AI: {generation + 1}/{n_generations} generations in {current_time: 6.0f} s. Estimated remaining time: {current_time / (generation + 1) * (n_generations - generation - 1):6.0f} s.", end="")
+    print(f"\rTraining AI: {generation + 1}/{n_generations} generations in {current_time: 6.0f} s.", end="")
+    print(f" Estimated remaining time: {current_time / (generation + 1) * (n_generations - generation - 1):6.0f} s.", end="")
+    print(f" Best score: {max(population_scores):.2f}", end="")
     if current_time > max_time_s:
       print(f"\nStopping training after {generation + 1} generations.  Maximum time of {max_time_s} s exceeded.")
       best_player_evolution = best_player_evolution[:generation + 1]
       pairwise_distances = pairwise_distances[:generation + 1]
       fitness_variances = fitness_variances[:generation + 1]
       break
+  # close process pool
+  process_pool.close()
+  process_pool.join()
   # return best parameters
   print("\nTraining complete.  Evaluating best player...", end="")
   population_scores: list[float] = evaluate_population(population, n_games_per_generation, n_repetitions_per_game)
-  best_player: Genetic_Rule_Player = population[np.argmax(population_scores)]
+  best_player: Genetic_Wizard_Player = population[np.argmax(population_scores)]
   print("\b\b\b done.")
   # save last generation
   training_name: str = time.strftime("%Y-%m-%d_%H-%M-%S") + f"_{population[0].__class__.__name__}"
-  save_dir: str = os.path.join("genetic_ai_training_history", training_name)
+  save_dir: str = os.path.join("genetic_ai_training_history_3", training_name)
+  # save_dir: str = os.path.join("genetic_ai_training_history", training_name)
   os.makedirs(save_dir, exist_ok=True)
   for i, player in enumerate(population):
     player.save(save_dir, id=i)
@@ -94,9 +111,11 @@ def train_genetic_ai(
   return best_player.get_parameters(), best_player_evolution, pairwise_distances, fitness_variances
 
 def evaluate_population(
-      population: list[Genetic_Rule_Player],
+      population: list[Genetic_Wizard_Player],
       n_games_per_generation: int,
       n_repetitions_per_game: int,
+      process_pool: mp.Pool = None,
+      min_reps_for_multiprocessing: int = 5,
       ) -> list[list[float]]:
   """
   Evaluate the population by playing a number of games with each player and calculating their score.
@@ -114,8 +133,9 @@ def evaluate_population(
   """
   individual_scores: list[list[float]] = [[] for _ in range(len(population))]
   individual_indices: list[int] = list(range(len(population)))
-  if n_repetitions_per_game > 5:
-    process_pool: mp.Pool = mp.Pool(mp.cpu_count() // 2)
+
+  if process_pool is None and n_repetitions_per_game > min_reps_for_multiprocessing:
+    process_pool: mp.Pool = mp.Pool(mp.cpu_count())
   # for n_players in range(3, 7):
   n_players = 3
   player_indices_list = list(individual_indices)
@@ -134,7 +154,7 @@ def evaluate_population(
         max_rounds=20,
         ai_instances=players,
     )
-    if n_repetitions_per_game > 5:
+    if n_repetitions_per_game > min_reps_for_multiprocessing:
       scores = auto_game.auto_play_multi_threaded(
           n_games = n_repetitions_per_game,
           process_pool = process_pool,
@@ -144,16 +164,16 @@ def evaluate_population(
           n_games = n_repetitions_per_game)
     for i, player_index in enumerate(player_indices):
       individual_scores[player_index].append(scores[i])
-  if n_repetitions_per_game > 5:
-    process_pool.close()
-    process_pool.join()
+  # if n_repetitions_per_game > min_reps_for_multiprocessing:
+  #   process_pool.close()
+  #   process_pool.join()
   # calculate mean score for each player
   for i, player in enumerate(population):
     individual_scores[i] = np.mean(individual_scores[i])
   return individual_scores
 
 def evolve_population(
-    population: list[Genetic_Rule_Player],
+    population: list[Genetic_Wizard_Player],
     population_scores: list[float],
     survival_rate: float = 0.05,
     crossover_range: float = 0.1,
@@ -161,7 +181,7 @@ def evolve_population(
     mutation_range: float = 0.1,
     track_n_best_players: int = 5,
     k_tournament: int = 3,
-    ) -> tuple[list[Genetic_Rule_Player], list[tuple[float, Genetic_Rule_Player]]]:
+    ) -> tuple[list[Genetic_Wizard_Player], list[tuple[float, Genetic_Wizard_Player]]]:
   """
   Evolve the population by selecting the best players and using them to create new players.
 
@@ -178,12 +198,12 @@ def evolve_population(
   """
   # select best players
   n_best_players = int(len(population) * survival_rate)
-  sorted_population: list[tuple[float, Genetic_Rule_Player]] = \
+  sorted_population: list[tuple[float, Genetic_Wizard_Player]] = \
       sorted(zip(population_scores, population), reverse=True, key=lambda x: x[0])
-  best_players: list[Genetic_Rule_Player] = [player for _, player in sorted_population][:n_best_players]
+  best_players: list[Genetic_Wizard_Player] = [player for _, player in sorted_population][:n_best_players]
   # Create new children
   n_children: int = len(population) - len(best_players)
-  new_children: list[Genetic_Rule_Player] = []
+  new_children: list[Genetic_Wizard_Player] = []
   for _ in range(n_children):
     parent1_idx = tournament_selection(k_tournament, population_scores)
     parent2_idx = tournament_selection(k_tournament, population_scores)
@@ -192,7 +212,7 @@ def evolve_population(
     child = _create_child(parent1, parent2, crossover_range, mutation_rate, mutation_range)
     new_children.append(child)
 
-  new_population: list[Genetic_Rule_Player] = best_players + new_children
+  new_population: list[Genetic_Wizard_Player] = best_players + new_children
   # shuffle new population in-place
   np.random.shuffle(new_population)
   return new_population, sorted_population[:track_n_best_players]
@@ -214,8 +234,8 @@ def tournament_selection(k: int, individual_scores: list[float]) -> int:
   return tournament_indices[winner_index]
 
 def _create_child(
-    parent_1: Genetic_Rule_Player,
-    parent_2: Genetic_Rule_Player,
+    parent_1: Genetic_Wizard_Player,
+    parent_2: Genetic_Wizard_Player,
     crossover_range: float = 0.1,
     mutation_rate: float = 0.1,
     mutation_range: float = 0.1,
@@ -231,12 +251,12 @@ def _create_child(
       Genetic_Wizard_Player: the child
   """
   # create child
-  child: Genetic_Rule_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
+  child: Genetic_Wizard_Player = parent_1.crossover(parent_2, combination_range=crossover_range)
   child.mutate(mutation_rate=mutation_rate, mutation_range=mutation_range)
   return child
 
 # implement measures to characterize the population
-def pairwise_distance(population: list[Genetic_Rule_Player]) -> float:
+def pairwise_distance(population: list[Genetic_Wizard_Player]) -> float:
   """
   Calculate the pairwise distance between all players in the population.
   This is done by sampling 10*len(population) pairs of players and calculating the distance between them
@@ -293,7 +313,7 @@ def flatten_parameters(param_dict: dict[str, Any]) -> np.ndarray:
   return np.array(flat_list)
 
 
-def load_diversity_values():
+def load_diversity_values(file_path: str = None) -> tuple[list[float], list[float]]:
   """
   Load the diversity values from a file that gets requested via a filedialog
 
@@ -301,20 +321,42 @@ def load_diversity_values():
       list[float]: list of average pairwise distances of parameters between players
       list[float]: list of average fitness variances of players
   """
-  file_path = filedialog.askopenfilename(
-      initialdir=".",
-      title="Select a diversity history file",
-      filetypes=(("json files", "*.json"), ("all files", "*.*")))
+  if file_path is None:
+    file_path = filedialog.askopenfilename(
+        initialdir=".",
+        title="Select a diversity history file",
+        filetypes=(("json files", "*.json"), ("all files", "*.*")))
   with open(file_path, "r") as file:
     diversity_dict = json.load(file)
   pairwise_distances: list[float] = diversity_dict["pairwise_distances"]
   fitness_variances: list[float] = diversity_dict["fitness_variances"]
   return pairwise_distances, fitness_variances
 
+def load_best_player_evolution(file_path: str = None) -> list[dict[str, Any]]:
+  """
+  Load the best player evolution from a file that gets requested via a filedialog, unless a filepath is provided
+
+  Args:
+      file_path (str, optional): path to the file. Defaults to None.
+
+  Returns:
+      bet_player_evolution
+  """
+  if file_path is None:
+    file_path = filedialog.askopenfilename(
+        initialdir=".",
+        title="Select a best player evolution file",
+        filetypes=(("pickle files", "*.pickle"), ("all files", "*.*")))
+  with open(file_path, "rb") as file:
+    best_player_evolution = pickle.load(file)
+  return best_player_evolution
+
+
 
 def plot_diversity_measures(
     pairwise_distances: list[float],
     fitness_variances: list[float],
+    to_file: bool = False,
     ):
   """
   Plot the pairwise distances and fitness variances over the generations.
@@ -331,4 +373,10 @@ def plot_diversity_measures(
   ax[1].set_title("Average fitness variance of population")
   ax[1].set_xlabel("Generation")
   ax[1].set_ylabel("Variance")
-  plt.show()
+  if to_file:
+    # create directory if it does not exist
+    if not os.path.exists("training_results"):
+      os.makedirs("training_results")
+    plt.savefig(os.path.join("training_results", "diversity_measures.png"))
+  else:
+    plt.show()

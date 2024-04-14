@@ -114,6 +114,7 @@ class WizardGame():
             hand: list,
             serving_color: int,
             game_info: dict):
+        pass
 
 
 

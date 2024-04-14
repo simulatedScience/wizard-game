@@ -304,10 +304,11 @@ class Genetic_NN_Player(Wizard_Base_Ai):
       parent_2_weights: list[torch.Tensor] = parent_2_network.get_weights()
       child_network_parameters[network_name+"_weights"]: list[torch.Tensor] = []
       for weight_tensor_1, weight_tensor_2 in zip(parent_1_weights, parent_2_weights):
-        # get the distance between the two parents' parameters
-        distance: torch.Tensor = weight_tensor_1 - weight_tensor_2
-        random_factor: torch.Tensor = torch.empty_like(distance).uniform_(-combination_range, combination_range) * distance
-        new_weights: torch.Tensor = weight_tensor_1 + random_factor
+        new_weights: torch.Tensor = (weight_tensor_1 + weight_tensor_2) / 2
+        # get the distance between the two parents' parameters as abs(a-b)
+        distance: torch.Tensor = torch.abs(weight_tensor_1 - weight_tensor_2)
+        # random_factor: torch.Tensor = torch.empty_like(distance).uniform_(-combination_range, combination_range) * distance
+        # new_weights: torch.Tensor = weight_tensor_1 + random_factor
         child_network_parameters[network_name+"_weights"].append(new_weights)
     return Genetic_NN_Player(
       trump_color_nn_layers = self.trump_color_nn_layers,
