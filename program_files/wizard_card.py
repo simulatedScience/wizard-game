@@ -47,14 +47,16 @@ class Wizard_Card:
         other (Wizard_Card): any wizard card object
 
     Returns:
-        bool: whether or not `self` is considered to be less than `other`
+        bool: whether or not `self` is considered to be equal to `other`
     """
     if other is None:
       return False
-    if self.color != other.color:
+    if self.raw_value != other.raw_value:
       return False
-    if self.value != other.value:
-      return False
+    # if self.color != other.color:
+    #   return False
+    # if self.value != other.value:
+    #   return False
     return True
 
 
