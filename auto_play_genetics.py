@@ -17,12 +17,13 @@ import multiprocessing as mp
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+from memory_profiler import profile
 
 from program_files.game_state import Game_State
 from program_files.wizard_ais.ai_base_class import Wizard_Base_Ai
 from program_files.helper_functions import get_hands
 
-
+# @profile
 class Genetic_Auto_Play():
   def __init__(self,
                n_players: int,
@@ -96,7 +97,6 @@ class Genetic_Auto_Play():
     player_scores[random_order] = player_scores # record results in proper order
     return player_scores
 
-
   def auto_play_multi_threaded(self, 
       n_games: int, 
       process_pool: mp.Pool,
@@ -135,7 +135,6 @@ class Genetic_Auto_Play():
       self.play_round(round_nbr, game, self.limit_choices, ai_instances)
     return game.players_total_points
 
-
   def play_round(self, round_nbr: int, game: Game_State, limit_choices: bool, ai_instances: list[Wizard_Base_Ai]):
     """
     play the given round with `self.n_players` players.
@@ -169,7 +168,6 @@ class Genetic_Auto_Play():
     while game.tricks_to_be_played > 0:
       self.play_trick(game, ai_instances)
 
-
   def play_trick(self, game: Game_State, ai_instances: list[Wizard_Base_Ai]):
     """
     play one trick and advance the game object accordingly
@@ -179,6 +177,7 @@ class Genetic_Auto_Play():
       action = ai_instances[game.trick_active_player].get_trick_action(
           game_state=game)
       game.perform_action(action)
+
 
   def get_player_labels(self):
     """
@@ -242,3 +241,5 @@ class Genetic_Auto_Play():
       ax2.legend(loc="center left", bbox_to_anchor=(1.02, 1.02))
       # ax2.legend(loc="center right")
       plt.show()
+
+
