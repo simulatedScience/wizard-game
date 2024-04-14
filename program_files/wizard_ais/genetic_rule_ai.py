@@ -12,7 +12,7 @@ from program_files.scoring_functions import update_winning_card
 class Genetic_Rule_Ai():
   name = "genetic rule ai"
   def __init__(self):
-    self.player = Genetic_Rule_Player(
+    self.player = Genetic_Wizard_Player(
       # 10 gens 10 players training
       # color_sum_weight = -0.3211434016721016,
       # color_number_weight = 0.2567452912923557,
@@ -38,16 +38,53 @@ class Genetic_Rule_Ai():
       # n_cards_factor = -0.9064549865669419,
       # remaining_cards_factor = -1.4374978054022844,
       # 300 gens, 150 players training
-      color_sum_weight = 0.01746404300746775,
-      color_number_weight = -0.2104898616939936,
-      min_value_for_win = 7.312661896674464,
-      min_trump_value_for_win = 7.503686000318684,
-      round_factor = -0.10709470379417774,
-      jester_factor = -0.11372619078353789,
-      prediction_factor = 0.6519285674963982,
-      wizard_value = 24.17913209609162,
-      n_cards_factor = -1.068106127603159,
-      remaining_cards_factor = -0.7083943818724096,
+      # color_sum_weight = 0.01746404300746775,
+      # color_number_weight = -0.2104898616939936,
+      # min_value_for_win = 7.312661896674464,
+      # min_trump_value_for_win = 7.503686000318684,
+      # round_factor = -0.10709470379417774,
+      # jester_factor = -0.11372619078353789,
+      # prediction_factor = 0.6519285674963982,
+      # wizard_value = 24.17913209609162,
+      # n_cards_factor = -1.068106127603159,
+      # remaining_cards_factor = -0.7083943818724096,
+      # 50 gens, 200 players training, no random crossover
+      # color_sum_weight = -0.02705227231406858,
+      # color_number_weight = -0.03559130823001219,
+      # min_value_for_win = 7.881667827969901,
+      # min_trump_value_for_win = 1.3584164959884415,
+      # round_factor = -0.17744416198438798,
+      # jester_factor = 0.10573032388334139,
+      # prediction_factor = 0.7526447111970636,
+      # trump_value_increase = -23.579539601920406,
+      # wizard_value = -16.793265902390303,
+      # n_cards_factor = -2.028249267760762,
+      # remaining_cards_factor = -0.8101182448278771,
+      # 50 gens, 500 players training, no random crossover
+      # color_sum_weight = -0.12394586923513254,
+      # color_number_weight = 0.07393070206567585,
+      # min_value_for_win = 4.959517943106341,
+      # min_trump_value_for_win = 3.3505688286413466,
+      # round_factor = -0.1995498215151124,
+      # jester_factor = 0.09932160981694868,
+      # prediction_factor = 0.6613499100163861,
+      # trump_value_increase = 9.375630602534276,
+      # wizard_value = 25.76770261258566,
+      # n_cards_factor = -3.0459894529329903,
+      # remaining_cards_factor = -1.2882674179374676,
+      # 50 gens, 500 players training, no random crossover, 50 games per generation
+      color_sum_weight = 0.0167167263126195,
+      color_number_weight = 0.03611644315206064,
+      min_value_for_win = 3.858585122322517,
+      min_trump_value_for_win = 3.380662960931272,
+      round_factor = -0.23076467190674418,
+      jester_factor = 0.053407697448655686,
+      prediction_factor = 0.6309157965718101,
+      trump_value_increase = 12.981316290954439,
+      wizard_value = -32.64007984098887,
+      n_cards_factor = -2.5995122807183444,
+      remaining_cards_factor = -0.9537597132600932,
+      
     )
     self.get_prediction = self.player.get_prediction
     self.get_trump_color_choice = self.player.get_trump_color_choice
@@ -55,7 +92,7 @@ class Genetic_Rule_Ai():
 
 
 
-class Genetic_Rule_Player(Wizard_Base_Ai):
+class Genetic_Wizard_Player(Wizard_Base_Ai):
   """
   Define a Wizard AI player that plays according to some basic rules.
   The rules have many adjustable numeric parameters to tweak the behaviour.
@@ -154,7 +191,7 @@ class Genetic_Rule_Player(Wizard_Base_Ai):
       json.dump(self.get_parameters(), file)
 
   @staticmethod
-  def load(filepath: str) -> "Genetic_Rule_Player":
+  def load(filepath: str) -> "Genetic_Wizard_Player":
     """
     Load a player from a json file.
 
@@ -166,7 +203,7 @@ class Genetic_Rule_Player(Wizard_Base_Ai):
     """
     with open(filepath, 'rb') as f:
       parameters = json.load(f)
-    return Genetic_Rule_Player(**parameters)
+    return Genetic_Wizard_Player(**parameters)
 
   # methods for playing wizard
   def get_trump_color_choice(self, hands: list[Wizard_Card], active_player: int, game_state: Game_State) -> int:
@@ -373,12 +410,15 @@ class Genetic_Rule_Player(Wizard_Base_Ai):
     new_params = {}
     other_params = other.__dict__
     for param_name, value in self.__dict__.items():
-      distance: float = other_params[param_name] - value
-      random_factor: float = random.random() * (1 + 2 * combination_range * distance) - combination_range * distance
-      new_params[param_name]: float = value + random_factor * distance
-      if abs(new_params[param_name]) > 1e3:
-        print(f"Warning: {param_name} is is too big after crossover: {new_params[param_name]}")
-    return Genetic_Rule_Player(**new_params)
+      # calculate mean of the two parents' parameters
+      new_params[param_name]: float = (value + other_params[param_name]) / 2
+      # distance: float = abs(other_params[param_name] - value)
+      # random_factor: float = random.random() * (1 + 2 * combination_range * distance) - combination_range * distance
+      # new_params[param_name]: float = value + random_factor
+      # if abs(new_params[param_name]) > 1e2:
+      #   print(f"parent values: {value}, {other_params[param_name]}")
+      #   print(f"Warning: {param_name} is is too big after crossover: {new_params[param_name]}")
+    return Genetic_Wizard_Player(**new_params)
 
   def get_parameters(self) -> dict[str, float]:
     """
