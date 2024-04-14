@@ -21,9 +21,9 @@ def get_hands(n_players: int, round_nbr: int) -> Tuple[list, Wizard_Card]:
         n_players (int) - number of players playing
         round_nbr (int) - current round number = number of cards each player gets this round
     """
-    deck = [Wizard_Card(i) for i in range(60)]
+    deck: list[Wizard_Card] = [Wizard_Card(i) for i in range(60)]
     np.random.shuffle(deck)
-    hands = [[]] * n_players
+    hands: list[list[Wizard_Card]] = [[]] * n_players
     for i in range(n_players):
         hands[i] = sorted(deck[i * round_nbr:i * round_nbr + round_nbr])
     # determine trump for the round
@@ -31,7 +31,6 @@ def get_hands(n_players: int, round_nbr: int) -> Tuple[list, Wizard_Card]:
         trump_card = None
     else:
         trump_card = deck[n_players * round_nbr]
-    # trump_card = Wizard_Card(14)
     return hands, trump_card
 
 
