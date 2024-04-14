@@ -4,7 +4,7 @@ Techniques like Hindsight Experience Replay may be implemented later.
 """
 # import random
 import numpy as np
-import tensorflow.keras as keras
+from torch.nn import Sequential
 
 from program_files.wizard_card import Wizard_Card
 from program_files.game_state import Game_State
@@ -86,6 +86,6 @@ class Basic_NN_Ai():
     #- (current player scores -> 6 neurons)
     """
     input_size = 40 + 1 + 1
-    self.trump_color_network = keras.Sequential()
+    self.trump_color_network = Sequential()
     self.trump_color_network.compile(optimizer=self.optimizer,
                                      loss=self.loss_function)
